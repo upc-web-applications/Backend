@@ -8,6 +8,7 @@ namespace RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCo
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<MonthlyReport> MonthlyReports => Set<MonthlyReport>();
+    public DbSet<CumulativeStIndicator> CumulativeStIndicators => Set<CumulativeStIndicator>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

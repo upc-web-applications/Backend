@@ -9,3 +9,7 @@ namespace RiskGuard.Platform.ReportsCompliance.Interfaces.Rest;
 [Route("api/v1/monthly_reports")]
 public class MonthlyReportsController(AppDbContext context, IUnitOfWork unitOfWork)
     : CrudController<MonthlyReport>(context, unitOfWork);
+
+[Route("api/v1/cumulative_st_indicators")]
+public class CumulativeStIndicatorsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<CumulativeStIndicator>(context, unitOfWork);

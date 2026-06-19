@@ -18,6 +18,7 @@ public static class DatabaseSeeder
             if (await context.MonthlyReports.AnyAsync()) return;
 
             context.MonthlyReports.Add(new MonthlyReport { Id = "MR_2026_05", Month = 5, Year = 2026 });
+            context.CumulativeStIndicators.Add(new CumulativeStIndicator { Id = "CSI_001", Name = "resolution_rate", Value = 72, Status = "acceptable" });
 
             await context.SaveChangesAsync();
         }

@@ -8,5 +8,6 @@ public static class ModelBuilderExtensions
     public static void ApplyReportsComplianceConfiguration(this ModelBuilder builder)
     {
         builder.Entity<MonthlyReport>().HasKey(report => report.Id);
+        builder.Entity<CumulativeStIndicator>().HasKey(indicator => indicator.Id);
     }
 }
