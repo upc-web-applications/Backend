@@ -9,5 +9,7 @@ public static class ModelBuilderExtensions
     {
         builder.Entity<MonthlyReport>().HasKey(report => report.Id);
         builder.Entity<CumulativeStIndicator>().HasKey(indicator => indicator.Id);
+        builder.Entity<HistoricalIncidentRecord>().HasKey(record => record.Id);
+        builder.Entity<AnnualOhsPlan>().HasKey(plan => plan.Id);
     }
 }

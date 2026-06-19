@@ -9,6 +9,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<MonthlyReport> MonthlyReports => Set<MonthlyReport>();
     public DbSet<CumulativeStIndicator> CumulativeStIndicators => Set<CumulativeStIndicator>();
+    public DbSet<HistoricalIncidentRecord> HistoricalIncidentRecords => Set<HistoricalIncidentRecord>();
+    public DbSet<AnnualOhsPlan> AnnualOhsPlans => Set<AnnualOhsPlan>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

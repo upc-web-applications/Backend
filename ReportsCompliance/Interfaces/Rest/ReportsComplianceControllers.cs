@@ -13,3 +13,11 @@ public class MonthlyReportsController(AppDbContext context, IUnitOfWork unitOfWo
 [Route("api/v1/cumulative_st_indicators")]
 public class CumulativeStIndicatorsController(AppDbContext context, IUnitOfWork unitOfWork)
     : CrudController<CumulativeStIndicator>(context, unitOfWork);
+
+[Route("api/v1/historical_incident_records")]
+public class HistoricalIncidentRecordsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<HistoricalIncidentRecord>(context, unitOfWork);
+
+[Route("api/v1/annual_ohs_plan")]
+public class AnnualOhsPlanController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<AnnualOhsPlan>(context, unitOfWork);
