@@ -1,13 +1,19 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RiskGuard.Platform.ReportsCompliance.Application.CommandServices;
 using RiskGuard.Platform.ReportsCompliance.Application.QueryServices;
+using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
 using RiskGuard.Platform.ReportsCompliance.Domain.Model.Queries;
 using RiskGuard.Platform.ReportsCompliance.Interfaces.Rest.Resources;
 using RiskGuard.Platform.ReportsCompliance.Interfaces.Rest.Transform;
+using RiskGuard.Platform.Shared.Domain.Repositories;
+using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace RiskGuard.Platform.ReportsCompliance.Interfaces.Rest;
+
+// ── MonthlyReports: GET all, GET id, GET year, POST, PUT ──
 
 [ApiController]
 [Route("api/v1/monthly_reports")]
@@ -15,7 +21,9 @@ namespace RiskGuard.Platform.ReportsCompliance.Interfaces.Rest;
 [SwaggerTag("Monthly Reports Endpoints")]
 public class MonthlyReportsController(
     IReportsComplianceCommandService commandService,
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context,
+    IUnitOfWork unitOfWork) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all monthly reports")]
@@ -63,14 +71,29 @@ public class MonthlyReportsController(
         var created = MonthlyReportResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
+
+    [HttpPut("{id}")]
+    [SwaggerOperation("Update monthly report")]
+    [SwaggerResponse(200, "The monthly report was updated.", typeof(MonthlyReportResource))]
+    [SwaggerResponse(404, "The monthly report was not found.")]
+    public async Task<IActionResult> Update(string id, [FromBody] MonthlyReport resource, CancellationToken cancellationToken)
+    {
+        var existing = await context.Set<MonthlyReport>().FindAsync([id], cancellationToken);
+        if (existing is null) return NotFound();
+        resource.Id = id;
+        context.Entry(existing).CurrentValues.SetValues(resource);
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Ok(MonthlyReportResourceFromEntityAssembler.ToResourceFromEntity(existing));
+    }
 }
+
+// ── CumulativeStIndicators: GET all, GET id ──
 
 [ApiController]
 [Route("api/v1/cumulative_st_indicators")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Cumulative ST Indicators Endpoints")]
 public class CumulativeStIndicatorsController(
-    IReportsComplianceCommandService commandService,
     IReportsComplianceQueryService queryService) : ControllerBase
 {
     [HttpGet]
@@ -84,19 +107,20 @@ public class CumulativeStIndicatorsController(
         return Ok(resources);
     }
 
-    [HttpPost]
-    [SwaggerOperation("Create cumulative ST indicator")]
-    [SwaggerResponse(201, "The indicator was created.", typeof(CumulativeStIndicatorResource))]
-    [SwaggerResponse(400, "The indicator was not created.")]
-    public async Task<IActionResult> Create([FromBody] CreateCumulativeStIndicatorResource resource, CancellationToken cancellationToken)
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get cumulative ST indicator by id")]
+    [SwaggerResponse(200, "The indicator was found.", typeof(CumulativeStIndicatorResource))]
+    [SwaggerResponse(404, "The indicator was not found.")]
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        var command = CreateCumulativeStIndicatorCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await commandService.Handle(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-        var created = CumulativeStIndicatorResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(null, created);
+        var query = new GetCumulativeStIndicatorByIdQuery(id);
+        var item = await queryService.Handle(query, cancellationToken);
+        if (item is null) return NotFound();
+        return Ok(CumulativeStIndicatorResourceFromEntityAssembler.ToResourceFromEntity(item));
     }
 }
+
+// ── HistoricalIncidentRecords: GET all, GET id, POST, PUT ──
 
 [ApiController]
 [Route("api/v1/historical_incident_records")]
@@ -104,7 +128,9 @@ public class CumulativeStIndicatorsController(
 [SwaggerTag("Historical Incident Records Endpoints")]
 public class HistoricalIncidentRecordsController(
     IReportsComplianceCommandService commandService,
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context,
+    IUnitOfWork unitOfWork) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all historical incident records")]
@@ -117,6 +143,18 @@ public class HistoricalIncidentRecordsController(
         return Ok(resources);
     }
 
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get historical incident record by id")]
+    [SwaggerResponse(200, "The record was found.", typeof(HistoricalIncidentRecordResource))]
+    [SwaggerResponse(404, "The record was not found.")]
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
+    {
+        var query = new GetHistoricalIncidentRecordByIdQuery(id);
+        var item = await queryService.Handle(query, cancellationToken);
+        if (item is null) return NotFound();
+        return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(item));
+    }
+
     [HttpPost]
     [SwaggerOperation("Create historical incident record")]
     [SwaggerResponse(201, "The record was created.", typeof(HistoricalIncidentRecordResource))]
@@ -127,17 +165,34 @@ public class HistoricalIncidentRecordsController(
         var result = await commandService.Handle(command, cancellationToken);
         if (result.IsFailure) return BadRequest(result.Error);
         var created = HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(null, created);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+    }
+
+    [HttpPut("{id}")]
+    [SwaggerOperation("Update historical incident record")]
+    [SwaggerResponse(200, "The record was updated.", typeof(HistoricalIncidentRecordResource))]
+    [SwaggerResponse(404, "The record was not found.")]
+    public async Task<IActionResult> Update(string id, [FromBody] HistoricalIncidentRecord resource, CancellationToken cancellationToken)
+    {
+        var existing = await context.Set<HistoricalIncidentRecord>().FindAsync([id], cancellationToken);
+        if (existing is null) return NotFound();
+        resource.Id = id;
+        context.Entry(existing).CurrentValues.SetValues(resource);
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(existing));
     }
 }
+
+// ── AnnualOhsPlan: GET all, GET id, PUT ──
 
 [ApiController]
 [Route("api/v1/annual_ohs_plan")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Annual OHS Plan Endpoints")]
 public class AnnualOhsPlanController(
-    IReportsComplianceCommandService commandService,
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context,
+    IUnitOfWork unitOfWork) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all annual OHS plans")]
@@ -150,26 +205,40 @@ public class AnnualOhsPlanController(
         return Ok(resources);
     }
 
-    [HttpPost]
-    [SwaggerOperation("Create annual OHS plan")]
-    [SwaggerResponse(201, "The plan was created.", typeof(AnnualOhsPlanResource))]
-    [SwaggerResponse(400, "The plan was not created.")]
-    public async Task<IActionResult> Create([FromBody] CreateAnnualOhsPlanResource resource, CancellationToken cancellationToken)
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get annual OHS plan by id")]
+    [SwaggerResponse(200, "The plan was found.", typeof(AnnualOhsPlanResource))]
+    [SwaggerResponse(404, "The plan was not found.")]
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        var command = CreateAnnualOhsPlanCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await commandService.Handle(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-        var created = AnnualOhsPlanResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(null, created);
+        var query = new GetAnnualOhsPlanByIdQuery(id);
+        var item = await queryService.Handle(query, cancellationToken);
+        if (item is null) return NotFound();
+        return Ok(AnnualOhsPlanResourceFromEntityAssembler.ToResourceFromEntity(item));
+    }
+
+    [HttpPut("{id}")]
+    [SwaggerOperation("Update annual OHS plan")]
+    [SwaggerResponse(200, "The plan was updated.", typeof(AnnualOhsPlanResource))]
+    [SwaggerResponse(404, "The plan was not found.")]
+    public async Task<IActionResult> Update(string id, [FromBody] AnnualOhsPlan resource, CancellationToken cancellationToken)
+    {
+        var existing = await context.Set<AnnualOhsPlan>().FindAsync([id], cancellationToken);
+        if (existing is null) return NotFound();
+        resource.Id = id;
+        context.Entry(existing).CurrentValues.SetValues(resource);
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Ok(AnnualOhsPlanResourceFromEntityAssembler.ToResourceFromEntity(existing));
     }
 }
+
+// ── PredictiveIndicators: GET all, GET id ──
 
 [ApiController]
 [Route("api/v1/predictive_indicators")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Predictive Indicators Endpoints")]
 public class PredictiveIndicatorsController(
-    IReportsComplianceCommandService commandService,
     IReportsComplianceQueryService queryService) : ControllerBase
 {
     [HttpGet]
@@ -183,27 +252,29 @@ public class PredictiveIndicatorsController(
         return Ok(resources);
     }
 
-    [HttpPost]
-    [SwaggerOperation("Create predictive indicator")]
-    [SwaggerResponse(201, "The indicator was created.", typeof(PredictiveIndicatorResource))]
-    [SwaggerResponse(400, "The indicator was not created.")]
-    public async Task<IActionResult> Create([FromBody] CreatePredictiveIndicatorResource resource, CancellationToken cancellationToken)
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get predictive indicator by id")]
+    [SwaggerResponse(200, "The indicator was found.", typeof(PredictiveIndicatorResource))]
+    [SwaggerResponse(404, "The indicator was not found.")]
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        var command = CreatePredictiveIndicatorCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await commandService.Handle(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-        var created = PredictiveIndicatorResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(null, created);
+        var query = new GetPredictiveIndicatorByIdQuery(id);
+        var item = await queryService.Handle(query, cancellationToken);
+        if (item is null) return NotFound();
+        return Ok(PredictiveIndicatorResourceFromEntityAssembler.ToResourceFromEntity(item));
     }
 }
+
+// ── CriticalAlerts: GET all, GET id, PUT, DELETE ──
 
 [ApiController]
 [Route("api/v1/critical_alerts")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Critical Alerts Endpoints")]
 public class CriticalAlertsController(
-    IReportsComplianceCommandService commandService,
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context,
+    IUnitOfWork unitOfWork) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all critical alerts")]
@@ -216,19 +287,47 @@ public class CriticalAlertsController(
         return Ok(resources);
     }
 
-    [HttpPost]
-    [SwaggerOperation("Create critical alert")]
-    [SwaggerResponse(201, "The alert was created.", typeof(CriticalAlertResource))]
-    [SwaggerResponse(400, "The alert was not created.")]
-    public async Task<IActionResult> Create([FromBody] CreateCriticalAlertResource resource, CancellationToken cancellationToken)
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get critical alert by id")]
+    [SwaggerResponse(200, "The alert was found.", typeof(CriticalAlertResource))]
+    [SwaggerResponse(404, "The alert was not found.")]
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        var command = CreateCriticalAlertCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await commandService.Handle(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-        var created = CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(null, created);
+        var query = new GetCriticalAlertByIdQuery(id);
+        var item = await queryService.Handle(query, cancellationToken);
+        if (item is null) return NotFound();
+        return Ok(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity(item));
+    }
+
+    [HttpPut("{id}")]
+    [SwaggerOperation("Update critical alert")]
+    [SwaggerResponse(200, "The alert was updated.", typeof(CriticalAlertResource))]
+    [SwaggerResponse(404, "The alert was not found.")]
+    public async Task<IActionResult> Update(string id, [FromBody] CriticalAlert resource, CancellationToken cancellationToken)
+    {
+        var existing = await context.Set<CriticalAlert>().FindAsync([id], cancellationToken);
+        if (existing is null) return NotFound();
+        resource.Id = id;
+        context.Entry(existing).CurrentValues.SetValues(resource);
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Ok(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity(existing));
+    }
+
+    [HttpDelete("{id}")]
+    [SwaggerOperation("Delete critical alert")]
+    [SwaggerResponse(204, "The alert was deleted.")]
+    [SwaggerResponse(404, "The alert was not found.")]
+    public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
+    {
+        var existing = await context.Set<CriticalAlert>().FindAsync([id], cancellationToken);
+        if (existing is null) return NotFound();
+        context.Set<CriticalAlert>().Remove(existing);
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return NoContent();
     }
 }
+
+// ── GeneratedReports: GET all, GET id, POST, DELETE ──
 
 [ApiController]
 [Route("api/v1/generated_reports")]
@@ -236,7 +335,9 @@ public class CriticalAlertsController(
 [SwaggerTag("Generated Reports Endpoints")]
 public class GeneratedReportsController(
     IReportsComplianceCommandService commandService,
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context,
+    IUnitOfWork unitOfWork) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all generated reports")]
@@ -249,6 +350,18 @@ public class GeneratedReportsController(
         return Ok(resources);
     }
 
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get generated report by id")]
+    [SwaggerResponse(200, "The report was found.", typeof(GeneratedReportResource))]
+    [SwaggerResponse(404, "The report was not found.")]
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
+    {
+        var query = new GetGeneratedReportByIdQuery(id);
+        var item = await queryService.Handle(query, cancellationToken);
+        if (item is null) return NotFound();
+        return Ok(GeneratedReportResourceFromEntityAssembler.ToResourceFromEntity(item));
+    }
+
     [HttpPost]
     [SwaggerOperation("Create generated report")]
     [SwaggerResponse(201, "The report was created.", typeof(GeneratedReportResource))]
@@ -259,16 +372,30 @@ public class GeneratedReportsController(
         var result = await commandService.Handle(command, cancellationToken);
         if (result.IsFailure) return BadRequest(result.Error);
         var created = GeneratedReportResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(null, created);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+    }
+
+    [HttpDelete("{id}")]
+    [SwaggerOperation("Delete generated report")]
+    [SwaggerResponse(204, "The report was deleted.")]
+    [SwaggerResponse(404, "The report was not found.")]
+    public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
+    {
+        var existing = await context.Set<GeneratedReport>().FindAsync([id], cancellationToken);
+        if (existing is null) return NotFound();
+        context.Set<GeneratedReport>().Remove(existing);
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return NoContent();
     }
 }
+
+// ── KpiDashboard: GET all, GET id ──
 
 [ApiController]
 [Route("api/v1/kpi_dashboard")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("KPI Dashboard Endpoints")]
 public class KpiDashboardController(
-    IReportsComplianceCommandService commandService,
     IReportsComplianceQueryService queryService) : ControllerBase
 {
     [HttpGet]
@@ -282,26 +409,26 @@ public class KpiDashboardController(
         return Ok(resources);
     }
 
-    [HttpPost]
-    [SwaggerOperation("Create KPI dashboard entry")]
-    [SwaggerResponse(201, "The KPI entry was created.", typeof(KpiDashboardResource))]
-    [SwaggerResponse(400, "The KPI entry was not created.")]
-    public async Task<IActionResult> Create([FromBody] CreateKpiDashboardResource resource, CancellationToken cancellationToken)
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get KPI dashboard entry by id")]
+    [SwaggerResponse(200, "The KPI entry was found.", typeof(KpiDashboardResource))]
+    [SwaggerResponse(404, "The KPI entry was not found.")]
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        var command = CreateKpiDashboardCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await commandService.Handle(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-        var created = KpiDashboardResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(null, created);
+        var query = new GetKpiDashboardByIdQuery(id);
+        var item = await queryService.Handle(query, cancellationToken);
+        if (item is null) return NotFound();
+        return Ok(KpiDashboardResourceFromEntityAssembler.ToResourceFromEntity(item));
     }
 }
+
+// ── HistoricalTrends: GET all, GET id ──
 
 [ApiController]
 [Route("api/v1/historical_trends")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Historical Trends Endpoints")]
 public class HistoricalTrendsController(
-    IReportsComplianceCommandService commandService,
     IReportsComplianceQueryService queryService) : ControllerBase
 {
     [HttpGet]
@@ -315,16 +442,15 @@ public class HistoricalTrendsController(
         return Ok(resources);
     }
 
-    [HttpPost]
-    [SwaggerOperation("Create historical trend")]
-    [SwaggerResponse(201, "The trend was created.", typeof(HistoricalTrendResource))]
-    [SwaggerResponse(400, "The trend was not created.")]
-    public async Task<IActionResult> Create([FromBody] CreateHistoricalTrendResource resource, CancellationToken cancellationToken)
+    [HttpGet("{id}")]
+    [SwaggerOperation("Get historical trend by id")]
+    [SwaggerResponse(200, "The trend was found.", typeof(HistoricalTrendResource))]
+    [SwaggerResponse(404, "The trend was not found.")]
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        var command = CreateHistoricalTrendCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await commandService.Handle(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-        var created = HistoricalTrendResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(null, created);
+        var query = new GetHistoricalTrendByIdQuery(id);
+        var item = await queryService.Handle(query, cancellationToken);
+        if (item is null) return NotFound();
+        return Ok(HistoricalTrendResourceFromEntityAssembler.ToResourceFromEntity(item));
     }
 }
