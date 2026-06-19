@@ -44,3 +44,29 @@ public class AnnualOhsPlan
     [JsonPropertyName("total_activities")]
     public int TotalActivities { get; set; }
 }
+
+public class PredictiveIndicator
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public decimal Value { get; set; }
+    public string Trend { get; set; } = "stable";
+}
+
+public class CriticalAlert
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Type { get; set; } = string.Empty;
+    public string Sector { get; set; } = string.Empty;
+
+    [JsonPropertyName("risk_type")]
+    public string RiskType { get; set; } = string.Empty;
+
+    public string Message { get; set; } = string.Empty;
+
+    [JsonPropertyName("elapsed_hours")]
+    public int ElapsedHours { get; set; }
+
+    public string Status { get; set; } = "active";
+}

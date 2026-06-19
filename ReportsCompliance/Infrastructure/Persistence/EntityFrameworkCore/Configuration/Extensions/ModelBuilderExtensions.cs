@@ -11,5 +11,7 @@ public static class ModelBuilderExtensions
         builder.Entity<CumulativeStIndicator>().HasKey(indicator => indicator.Id);
         builder.Entity<HistoricalIncidentRecord>().HasKey(record => record.Id);
         builder.Entity<AnnualOhsPlan>().HasKey(plan => plan.Id);
+        builder.Entity<PredictiveIndicator>().HasKey(indicator => indicator.Id);
+        builder.Entity<CriticalAlert>().HasKey(alert => alert.Id);
     }
 }

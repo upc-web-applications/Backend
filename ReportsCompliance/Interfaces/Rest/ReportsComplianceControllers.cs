@@ -21,3 +21,11 @@ public class HistoricalIncidentRecordsController(AppDbContext context, IUnitOfWo
 [Route("api/v1/annual_ohs_plan")]
 public class AnnualOhsPlanController(AppDbContext context, IUnitOfWork unitOfWork)
     : CrudController<AnnualOhsPlan>(context, unitOfWork);
+
+[Route("api/v1/predictive_indicators")]
+public class PredictiveIndicatorsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<PredictiveIndicator>(context, unitOfWork);
+
+[Route("api/v1/critical_alerts")]
+public class CriticalAlertsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<CriticalAlert>(context, unitOfWork);

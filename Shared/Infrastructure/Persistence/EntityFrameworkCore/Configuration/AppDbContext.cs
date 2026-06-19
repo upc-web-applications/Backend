@@ -11,6 +11,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<CumulativeStIndicator> CumulativeStIndicators => Set<CumulativeStIndicator>();
     public DbSet<HistoricalIncidentRecord> HistoricalIncidentRecords => Set<HistoricalIncidentRecord>();
     public DbSet<AnnualOhsPlan> AnnualOhsPlans => Set<AnnualOhsPlan>();
+    public DbSet<PredictiveIndicator> PredictiveIndicators => Set<PredictiveIndicator>();
+    public DbSet<CriticalAlert> CriticalAlerts => Set<CriticalAlert>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
