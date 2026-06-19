@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+    <resheader name="version"><value>2.0</value></resheader>
+    <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+    <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+    <data name="GenericError" xml:space="preserve"><value>An error occurred.</value></data>
+    <data name="OperationCancelled" xml:space="preserve"><value>The operation was cancelled.</value></data>
+    <data name="InternalServerError" xml:space="preserve"><value>An internal server error occurred.</value></data>
+</root>

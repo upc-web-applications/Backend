@@ -9,20 +9,27 @@ using RiskGuard.Platform.ReportsCompliance.Application.QueryServices;
 using RiskGuard.Platform.ReportsCompliance.Domain.Repositories;
 using RiskGuard.Platform.ReportsCompliance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using RiskGuard.Platform.Shared.Domain.Repositories;
+using RiskGuard.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Seeding;
 using RiskGuard.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
+using ProblemDetailsFactory = RiskGuard.Platform.Shared.Interfaces.Rest.ProblemDetails.ProblemDetailsFactory;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        options.Conventions.Add(new KebabCaseRouteNamingConvention());
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
+
+builder.Services.AddLocalization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options => options.EnableAnnotations());
@@ -44,8 +51,15 @@ builder.Services.AddScoped<IMonthlyReportRepository, MonthlyReportRepository>();
 builder.Services.AddScoped<IBaseReportsRepository, BaseReportsRepository>();
 builder.Services.AddScoped<IReportsComplianceCommandService, ReportsComplianceCommandService>();
 builder.Services.AddScoped<IReportsComplianceQueryService, ReportsComplianceQueryService>();
+builder.Services.AddScoped<ProblemDetailsFactory>();
 
 var app = builder.Build();
+
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture("en")
+    .AddSupportedCultures(["en", "es"])
+    .AddSupportedUICultures(["en", "es"]);
+app.UseRequestLocalization(localizationOptions);
 
 app.UseGlobalExceptionHandler();
 app.UseSwagger();

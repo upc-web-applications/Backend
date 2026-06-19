@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
 using RiskGuard.Platform.ReportsCompliance.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 
 namespace RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
@@ -16,6 +17,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<GeneratedReport> GeneratedReports => Set<GeneratedReport>();
     public DbSet<KpiDashboard> KpiDashboard => Set<KpiDashboard>();
     public DbSet<HistoricalTrend> HistoricalTrends => Set<HistoricalTrend>();
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.AddInterceptors(new AuditableEntityInterceptor());
+    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
