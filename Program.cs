@@ -2,6 +2,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using MySql.EntityFrameworkCore.Extensions;
+using RiskGuard.Platform.ReportsCompliance.Application.CommandServices;
+using RiskGuard.Platform.ReportsCompliance.Application.Internal.CommandServices;
+using RiskGuard.Platform.ReportsCompliance.Application.Internal.QueryServices;
+using RiskGuard.Platform.ReportsCompliance.Application.QueryServices;
 using RiskGuard.Platform.ReportsCompliance.Domain.Repositories;
 using RiskGuard.Platform.ReportsCompliance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using RiskGuard.Platform.Shared.Domain.Repositories;
@@ -37,6 +41,9 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(connecti
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<IMonthlyReportRepository, MonthlyReportRepository>();
+builder.Services.AddScoped<IBaseReportsRepository, BaseReportsRepository>();
+builder.Services.AddScoped<IReportsComplianceCommandService, ReportsComplianceCommandService>();
+builder.Services.AddScoped<IReportsComplianceQueryService, ReportsComplianceQueryService>();
 
 var app = builder.Build();
 
