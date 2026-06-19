@@ -70,3 +70,45 @@ public class CriticalAlert
 
     public string Status { get; set; } = "active";
 }
+
+public class GeneratedReport
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Type { get; set; } = string.Empty;
+    public int? Month { get; set; }
+    public int? Year { get; set; }
+    public string Format { get; set; } = "pdf";
+
+    [JsonPropertyName("generation_date")]
+    public DateTime GenerationDate { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("file_name")]
+    public string FileName { get; set; } = string.Empty;
+
+    public string Status { get; set; } = "generated";
+}
+
+public class KpiDashboard
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = string.Empty;
+    public decimal Value { get; set; }
+    public decimal Goal { get; set; }
+    public string Status { get; set; } = "ok";
+
+    [JsonPropertyName("update_date")]
+    public DateTime UpdateDate { get; set; } = DateTime.UtcNow;
+}
+
+public class HistoricalTrend
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public int Month { get; set; }
+    public int Year { get; set; }
+
+    [JsonPropertyName("total_incidents")]
+    public int TotalIncidents { get; set; }
+
+    public string Sector { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+}

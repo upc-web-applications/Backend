@@ -29,3 +29,15 @@ public class PredictiveIndicatorsController(AppDbContext context, IUnitOfWork un
 [Route("api/v1/critical_alerts")]
 public class CriticalAlertsController(AppDbContext context, IUnitOfWork unitOfWork)
     : CrudController<CriticalAlert>(context, unitOfWork);
+
+[Route("api/v1/generated_reports")]
+public class GeneratedReportsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<GeneratedReport>(context, unitOfWork);
+
+[Route("api/v1/kpi_dashboard")]
+public class KpiDashboardController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<KpiDashboard>(context, unitOfWork);
+
+[Route("api/v1/historical_trends")]
+public class HistoricalTrendsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<HistoricalTrend>(context, unitOfWork);
