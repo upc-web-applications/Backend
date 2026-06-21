@@ -1,0 +1,14 @@
+@RiskGuard_HostAddress = http://localhost:5000
+
+POST {{RiskGuard_HostAddress}}/api/v1/authentication/sign-in
+Content-Type: application/json
+
+{
+  "email": "operario@riskguard.tech",
+  "password": "Risk123"
+}
+
+###
+
+GET {{RiskGuard_HostAddress}}/api/v1/inspecciones
+Accept: application/json
