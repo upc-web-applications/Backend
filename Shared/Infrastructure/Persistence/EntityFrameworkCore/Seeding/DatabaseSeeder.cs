@@ -25,9 +25,9 @@ public static class DatabaseSeeder
 
             // ── IAM: Demo users ──
             context.Users.AddRange(
-                new User("admin", BCryptNet.HashPassword("Risk123")),
-                new User("supervisor", BCryptNet.HashPassword("Risk123")),
-                new User("operario", BCryptNet.HashPassword("Risk123"))
+                new User("admin", BCryptNet.HashPassword("Risk123")) { Email = "admin@riskguard.tech" },
+                new User("supervisor", BCryptNet.HashPassword("Risk123")) { Email = "supervisor@riskguard.tech" },
+                new User("operario", BCryptNet.HashPassword("Risk123")) { Email = "operario@riskguard.tech" }
             );
 
             // ── ReportsCompliance ──

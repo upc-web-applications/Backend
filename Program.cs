@@ -92,6 +92,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "RiskGuard Platform API", Version = "v1" });
+    c.CustomSchemaIds(type => type.FullName ?? type.Name);
     c.EnableAnnotations();
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
