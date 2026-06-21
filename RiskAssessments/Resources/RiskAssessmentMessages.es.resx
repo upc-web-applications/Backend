@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+    <resheader name="version"><value>2.0</value></resheader>
+    <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+    <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+    <data name="AssessmentCreated" xml:space="preserve"><value>Evaluación de riesgo creada exitosamente.</value></data>
+    <data name="AssessmentUpdated" xml:space="preserve"><value>Evaluación de riesgo actualizada exitosamente.</value></data>
+    <data name="PatternDetected" xml:space="preserve"><value>Se ha detectado un patrón de riesgo.</value></data>
+    <data name="AssessmentNotFound" xml:space="preserve"><value>Evaluación de riesgo no encontrada.</value></data>
+</root>

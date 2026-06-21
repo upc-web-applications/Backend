@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+    <resheader name="version"><value>2.0</value></resheader>
+    <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+    <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+    <data name="TechnicianCreated" xml:space="preserve"><value>Técnico creado exitosamente.</value></data>
+    <data name="TechnicianUpdated" xml:space="preserve"><value>Técnico actualizado exitosamente.</value></data>
+    <data name="TechnicianDeleted" xml:space="preserve"><value>Técnico eliminado exitosamente.</value></data>
+    <data name="TechnicianNotFound" xml:space="preserve"><value>Técnico no encontrado.</value></data>
+    <data name="DuplicateDocumentNumber" xml:space="preserve"><value>Ya existe un técnico con este número de documento.</value></data>
+</root>

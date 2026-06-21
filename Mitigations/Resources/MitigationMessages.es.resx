@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+    <resheader name="version"><value>2.0</value></resheader>
+    <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+    <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+    <data name="MitigationCreated" xml:space="preserve"><value>Mitigación creada exitosamente.</value></data>
+    <data name="TicketAssigned" xml:space="preserve"><value>Ticket asignado exitosamente.</value></data>
+    <data name="VerificationCompleted" xml:space="preserve"><value>Verificación completada exitosamente.</value></data>
+    <data name="SLAAlertTriggered" xml:space="preserve"><value>Alerta de SLA activada.</value></data>
+</root>
