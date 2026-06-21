@@ -60,6 +60,15 @@ using Acme.Center.Platform.Technicians.Application.Internal.QueryServices;
 using Acme.Center.Platform.Technicians.Application.QueryServices;
 using Acme.Center.Platform.Technicians.Domain.Repositories;
 using Acme.Center.Platform.Technicians.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.Inspections.Application.Internal.Services;
+using Acme.Center.Platform.Inspections.Domain.Repositories;
+using Acme.Center.Platform.Inspections.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.MonitoringDashboard.Application.Internal.Services;
+using Acme.Center.Platform.MonitoringDashboard.Domain.Repositories;
+using Acme.Center.Platform.MonitoringDashboard.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.OrganizationAssets.Domain.Repositories;
+using Acme.Center.Platform.OrganizationAssets.Application.Internal.Services;
+using Acme.Center.Platform.OrganizationAssets.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using ProblemDetailsFactory = Acme.Center.Platform.Shared.Interfaces.Rest.ProblemDetails.ProblemDetailsFactory;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -205,6 +214,18 @@ builder.Services.AddScoped<ICriticalNotificationRepository, CriticalNotification
 builder.Services.AddScoped<ICriticalNotificationCommandService, CriticalNotificationCommandService>();
 builder.Services.AddScoped<ICriticalNotificationQueryService, CriticalNotificationQueryService>();
 
+// Inspections DI
+builder.Services.AddScoped<IInspectionRepository, InspectionRepository>();
+builder.Services.AddScoped<InspectionCommandService>();
+
+// MonitoringDashboard DI
+builder.Services.AddScoped<IHeatMapZoneRepository, HeatMapZoneRepository>();
+builder.Services.AddScoped<MonitoringDashboardQueryService>();
+
+// OrganizationAssets DI
+builder.Services.AddScoped<IAreaRepository, AreaRepository>();
+builder.Services.AddScoped<OrganizationAssetsQueryService>();
+
 // Shared Infrastructure
 builder.Services.AddScoped<EventDispatcher>();
 
@@ -225,6 +246,7 @@ app.UseRequestLocalization(localizationOptions);
 
 // Middleware pipeline
 app.UseGlobalExceptionHandler();
+app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors("RiskGuardCors");
