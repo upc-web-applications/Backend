@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
 
-namespace RiskGuard.Platform.ReportsCompliance.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+namespace Acme.Center.Platform.ReportsCompliance.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 
 public static class ModelBuilderExtensions
 {

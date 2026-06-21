@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using RiskGuard.Platform.Shared.Domain.Model.Entities;
+using Acme.Center.Platform.Shared.Domain.Model.Entities;
 
-namespace RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
+namespace Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 
 public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 {

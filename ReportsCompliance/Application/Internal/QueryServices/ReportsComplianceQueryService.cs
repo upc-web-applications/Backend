@@ -1,9 +1,9 @@
-using RiskGuard.Platform.ReportsCompliance.Application.QueryServices;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Queries;
-using RiskGuard.Platform.ReportsCompliance.Domain.Repositories;
+using Acme.Center.Platform.ReportsCompliance.Application.QueryServices;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Queries;
+using Acme.Center.Platform.ReportsCompliance.Domain.Repositories;
 
-namespace RiskGuard.Platform.ReportsCompliance.Application.Internal.QueryServices;
+namespace Acme.Center.Platform.ReportsCompliance.Application.Internal.QueryServices;
 
 public class ReportsComplianceQueryService(IMonthlyReportRepository monthlyReportRepository,
     IBaseReportsRepository baseReportsRepository)

@@ -1,11 +1,11 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RiskGuard.Platform.Shared.Domain.Repositories;
-using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Acme.Center.Platform.Shared.Domain.Repositories;
+using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace RiskGuard.Platform.Shared.Interfaces.Rest;
+namespace Acme.Center.Platform.Shared.Interfaces.Rest;
 
 [ApiController]
 [Produces(MediaTypeNames.Application.Json)]

@@ -1,7 +1,7 @@
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
-using RiskGuard.Platform.ReportsCompliance.Interfaces.Rest.Resources;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Resources;
 
-namespace RiskGuard.Platform.ReportsCompliance.Interfaces.Rest.Transform;
+namespace Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Transform;
 
 public static class CriticalAlertResourceFromEntityAssembler
 {

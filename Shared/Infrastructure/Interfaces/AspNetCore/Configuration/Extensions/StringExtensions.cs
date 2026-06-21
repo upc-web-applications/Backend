@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace RiskGuard.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration.Extensions;
+namespace Acme.Center.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration.Extensions;
 
 public static partial class StringExtensions
 {

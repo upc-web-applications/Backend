@@ -1,3 +1,3 @@
-namespace RiskGuard.Platform.ReportsCompliance.Domain.Model.Queries;
+namespace Acme.Center.Platform.ReportsCompliance.Domain.Model.Queries;
 
 public record GetPredictiveIndicatorByIdQuery(string Id);

@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Humanizer;
 
-namespace RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+namespace Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 
 public static partial class StringExtensions
 {

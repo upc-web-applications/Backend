@@ -1,7 +1,7 @@
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
-using RiskGuard.Platform.Shared.Domain.Repositories;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.Shared.Domain.Repositories;
 
-namespace RiskGuard.Platform.ReportsCompliance.Domain.Repositories;
+namespace Acme.Center.Platform.ReportsCompliance.Domain.Repositories;
 
 public interface IMonthlyReportRepository : IBaseRepository<MonthlyReport>
 {

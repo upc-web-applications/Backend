@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
-using RiskGuard.Platform.Shared.Resources;
-using RiskGuard.Platform.Shared.Resources.Errors;
+using Acme.Center.Platform.Shared.Resources;
+using Acme.Center.Platform.Shared.Resources.Errors;
 
-namespace RiskGuard.Platform.Shared.Interfaces.Rest.ProblemDetails;
+namespace Acme.Center.Platform.Shared.Interfaces.Rest.ProblemDetails;
 
 public class ProblemDetailsFactory(
     IStringLocalizer<ErrorMessage> errorLocalizer,

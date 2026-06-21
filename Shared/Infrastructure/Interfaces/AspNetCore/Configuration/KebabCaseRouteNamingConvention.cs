@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using RiskGuard.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration.Extensions;
+using Acme.Center.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration.Extensions;
 
-namespace RiskGuard.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
+namespace Acme.Center.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 
 public class KebabCaseRouteNamingConvention : IControllerModelConvention
 {

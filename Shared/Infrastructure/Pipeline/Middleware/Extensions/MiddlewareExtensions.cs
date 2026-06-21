@@ -1,6 +1,6 @@
-using RiskGuard.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
+using Acme.Center.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
 
-namespace RiskGuard.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
+namespace Acme.Center.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
 
 public static class MiddlewareExtensions
 {

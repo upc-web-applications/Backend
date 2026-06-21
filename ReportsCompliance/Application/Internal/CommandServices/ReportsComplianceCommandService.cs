@@ -1,14 +1,17 @@
 using Microsoft.EntityFrameworkCore;
-using RiskGuard.Platform.ReportsCompliance.Application.CommandServices;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Commands;
-using RiskGuard.Platform.Shared.Application.Model;
-using RiskGuard.Platform.Shared.Domain.Repositories;
-using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Microsoft.Extensions.Localization;
+using Acme.Center.Platform.ReportsCompliance.Application.CommandServices;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Commands;
+using Acme.Center.Platform.Shared.Application.Model;
+using Acme.Center.Platform.Shared.Domain.Repositories;
+using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Acme.Center.Platform.Shared.Resources.Errors;
 
-namespace RiskGuard.Platform.ReportsCompliance.Application.Internal.CommandServices;
+namespace Acme.Center.Platform.ReportsCompliance.Application.Internal.CommandServices;
 
-public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork unitOfWork)
+public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork unitOfWork, IStringLocalizer<ErrorMessage> localizer)
     : IReportsComplianceCommandService
 {
     public async Task<Result<MonthlyReport>> Handle(CreateMonthlyReportCommand command, CancellationToken cancellationToken)
@@ -22,7 +25,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         }
         catch (DbUpdateException)
         {
-            return Result<MonthlyReport>.Failure("DatabaseError", "Error saving monthly report.");
+            return Result<MonthlyReport>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
         }
     }
 
@@ -37,7 +40,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         }
         catch (DbUpdateException)
         {
-            return Result<CumulativeStIndicator>.Failure("DatabaseError", "Error saving cumulative indicator.");
+            return Result<CumulativeStIndicator>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
         }
     }
 
@@ -52,7 +55,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         }
         catch (DbUpdateException)
         {
-            return Result<HistoricalIncidentRecord>.Failure("DatabaseError", "Error saving historical incident record.");
+            return Result<HistoricalIncidentRecord>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
         }
     }
 
@@ -71,7 +74,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         }
         catch (DbUpdateException)
         {
-            return Result<AnnualOhsPlan>.Failure("DatabaseError", "Error saving annual OHS plan.");
+            return Result<AnnualOhsPlan>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
         }
     }
 
@@ -86,7 +89,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         }
         catch (DbUpdateException)
         {
-            return Result<PredictiveIndicator>.Failure("DatabaseError", "Error saving predictive indicator.");
+            return Result<PredictiveIndicator>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
         }
     }
 
@@ -105,7 +108,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         }
         catch (DbUpdateException)
         {
-            return Result<CriticalAlert>.Failure("DatabaseError", "Error saving critical alert.");
+            return Result<CriticalAlert>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
         }
     }
 
@@ -124,7 +127,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         }
         catch (DbUpdateException)
         {
-            return Result<GeneratedReport>.Failure("DatabaseError", "Error saving generated report.");
+            return Result<GeneratedReport>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
         }
     }
 
@@ -139,7 +142,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         }
         catch (DbUpdateException)
         {
-            return Result<KpiDashboard>.Failure("DatabaseError", "Error saving KPI dashboard.");
+            return Result<KpiDashboard>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
         }
     }
 
@@ -158,7 +161,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         }
         catch (DbUpdateException)
         {
-            return Result<HistoricalTrend>.Failure("DatabaseError", "Error saving historical trend.");
+            return Result<HistoricalTrend>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
         }
     }
 }

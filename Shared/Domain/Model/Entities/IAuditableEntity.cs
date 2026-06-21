@@ -1,4 +1,4 @@
-namespace RiskGuard.Platform.Shared.Domain.Model.Entities;
+namespace Acme.Center.Platform.Shared.Domain.Model.Entities;
 
 public interface IAuditableEntity
 {

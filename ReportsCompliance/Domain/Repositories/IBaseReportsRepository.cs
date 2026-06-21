@@ -1,6 +1,6 @@
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
 
-namespace RiskGuard.Platform.ReportsCompliance.Domain.Repositories;
+namespace Acme.Center.Platform.ReportsCompliance.Domain.Repositories;
 
 public interface IBaseReportsRepository
 {

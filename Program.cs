@@ -1,23 +1,70 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using MySql.EntityFrameworkCore.Extensions;
-using RiskGuard.Platform.ReportsCompliance.Application.CommandServices;
-using RiskGuard.Platform.ReportsCompliance.Application.Internal.CommandServices;
-using RiskGuard.Platform.ReportsCompliance.Application.Internal.QueryServices;
-using RiskGuard.Platform.ReportsCompliance.Application.QueryServices;
-using RiskGuard.Platform.ReportsCompliance.Domain.Repositories;
-using RiskGuard.Platform.ReportsCompliance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
-using RiskGuard.Platform.Shared.Domain.Repositories;
-using RiskGuard.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
-using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
-using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
-using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Seeding;
-using RiskGuard.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
-using ProblemDetailsFactory = RiskGuard.Platform.Shared.Interfaces.Rest.ProblemDetails.ProblemDetailsFactory;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Acme.Center.Platform.Hazards.Application.CommandServices;
+using Acme.Center.Platform.Hazards.Application.Internal.CommandServices;
+using Acme.Center.Platform.Hazards.Application.Internal.QueryServices;
+using Acme.Center.Platform.Hazards.Application.QueryServices;
+using Acme.Center.Platform.Hazards.Domain.Repositories;
+using Acme.Center.Platform.Hazards.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.Iam.Application.CommandServices;
+using Acme.Center.Platform.Iam.Application.Internal.CommandServices;
+using Acme.Center.Platform.Iam.Application.Internal.OutboundServices;
+using Acme.Center.Platform.Iam.Application.Internal.QueryServices;
+using Acme.Center.Platform.Iam.Application.QueryServices;
+using Acme.Center.Platform.Iam.Domain.Repositories;
+using Acme.Center.Platform.Iam.Infrastructure.Hashing.BCrypt.Services;
+using Acme.Center.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
+using Acme.Center.Platform.Iam.Infrastructure.Tokens.Jwt.Services;
+using Acme.Center.Platform.Mitigations.Application.CommandServices;
+using Acme.Center.Platform.Mitigations.Application.Internal.CommandServices;
+using Acme.Center.Platform.Mitigations.Application.Internal.QueryServices;
+using Acme.Center.Platform.Mitigations.Application.QueryServices;
+using Acme.Center.Platform.Mitigations.Domain.Repositories;
+using Acme.Center.Platform.Mitigations.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.ReportsCompliance.Application.CommandServices;
+using Acme.Center.Platform.ReportsCompliance.Application.Internal.CommandServices;
+using Acme.Center.Platform.ReportsCompliance.Application.Internal.QueryServices;
+using Acme.Center.Platform.ReportsCompliance.Application.QueryServices;
+using Acme.Center.Platform.ReportsCompliance.Domain.Repositories;
+using Acme.Center.Platform.ReportsCompliance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.RiskAssessments.Application.CommandServices;
+using Acme.Center.Platform.RiskAssessments.Application.Internal.CommandServices;
+using Acme.Center.Platform.RiskAssessments.Application.Internal.QueryServices;
+using Acme.Center.Platform.RiskAssessments.Application.QueryServices;
+using Acme.Center.Platform.RiskAssessments.Domain.Repositories;
+using Acme.Center.Platform.RiskAssessments.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.Hazards.Interfaces.Acl;
+using Acme.Center.Platform.Hazards.Application.Acl;
+using Acme.Center.Platform.Iam.Interfaces.Acl;
+using Acme.Center.Platform.Iam.Application.Acl;
+using Acme.Center.Platform.Technicians.Interfaces.Acl;
+using Acme.Center.Platform.Technicians.Application.Acl;
+using Acme.Center.Platform.RiskAssessments.Interfaces.Acl;
+using Acme.Center.Platform.RiskAssessments.Application.Acl;
+using Acme.Center.Platform.Shared.Domain.Repositories;
+using Acme.Center.Platform.Shared.Infrastructure.Mediator.InProcess;
+using Acme.Center.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
+using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Seeding;
+using Acme.Center.Platform.Shared.Infrastructure.Pipeline.Middleware.Extensions;
+using Acme.Center.Platform.Technicians.Application.CommandServices;
+using Acme.Center.Platform.Technicians.Application.Internal.CommandServices;
+using Acme.Center.Platform.Technicians.Application.Internal.QueryServices;
+using Acme.Center.Platform.Technicians.Application.QueryServices;
+using Acme.Center.Platform.Technicians.Domain.Repositories;
+using Acme.Center.Platform.Technicians.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using ProblemDetailsFactory = Acme.Center.Platform.Shared.Interfaces.Rest.ProblemDetails.ProblemDetailsFactory;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Controllers with kebab-case + JSON options
 builder.Services.AddControllers(options =>
     {
         options.Conventions.Add(new KebabCaseRouteNamingConvention());
@@ -30,45 +77,163 @@ builder.Services.AddControllers(options =>
     });
 
 builder.Services.AddLocalization();
-
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => options.EnableAnnotations());
-builder.Services.AddOpenApi();
 
+// Swagger with JWT support
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "RiskGuard Platform API", Version = "v1" });
+    c.EnableAnnotations();
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("RiskGuardCors", policy =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
+// Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                        ?? "server=localhost;user=root;password=12345678;database=riskguard-platform";
 builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(connectionString));
 
+// JWT Authentication
+var tokenSettingsSection = builder.Configuration.GetSection("TokenSettings");
+builder.Services.Configure<TokenSettings>(tokenSettingsSection);
+var secret = tokenSettingsSection["Secret"] ?? "RiskGuardDefaultSecretKey2026!@#$%";
+var key = Encoding.ASCII.GetBytes(secret);
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+builder.Services.AddAuthorization();
+
+// Shared DI
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
+builder.Services.AddScoped<ProblemDetailsFactory>();
+
+// ReportsCompliance DI
 builder.Services.AddScoped<IMonthlyReportRepository, MonthlyReportRepository>();
 builder.Services.AddScoped<IBaseReportsRepository, BaseReportsRepository>();
 builder.Services.AddScoped<IReportsComplianceCommandService, ReportsComplianceCommandService>();
 builder.Services.AddScoped<IReportsComplianceQueryService, ReportsComplianceQueryService>();
-builder.Services.AddScoped<ProblemDetailsFactory>();
+
+// IAM DI
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IHashingService, HashingService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserCommandService, UserCommandService>();
+builder.Services.AddScoped<IUserQueryService, UserQueryService>();
+
+// Hazard DI
+builder.Services.AddScoped<IHazardRepository, HazardRepository>();
+builder.Services.AddScoped<IHazardCommandService, HazardCommandService>();
+builder.Services.AddScoped<IHazardQueryService, HazardQueryService>();
+
+// Technician DI
+builder.Services.AddScoped<ITechnicianRepository, TechnicianRepository>();
+builder.Services.AddScoped<ITechnicianCommandService, TechnicianCommandService>();
+builder.Services.AddScoped<ITechnicianQueryService, TechnicianQueryService>();
+
+// RiskAssessment DI
+builder.Services.AddScoped<IRiskAssessmentRepository, RiskAssessmentRepository>();
+builder.Services.AddScoped<IRiskAssessmentCommandService, RiskAssessmentCommandService>();
+builder.Services.AddScoped<IRiskAssessmentQueryService, RiskAssessmentQueryService>();
+builder.Services.AddScoped<IRiskPatternRepository, RiskPatternRepository>();
+builder.Services.AddScoped<IRiskPatternCommandService, RiskPatternCommandService>();
+builder.Services.AddScoped<IRiskPatternQueryService, RiskPatternQueryService>();
+builder.Services.AddScoped<IPatternAlertRepository, PatternAlertRepository>();
+builder.Services.AddScoped<IPatternAlertCommandService, PatternAlertCommandService>();
+builder.Services.AddScoped<IPatternAlertQueryService, PatternAlertQueryService>();
+builder.Services.AddScoped<IAreaCriticalityLevelRepository, AreaCriticalityLevelRepository>();
+builder.Services.AddScoped<IAreaCriticalityLevelCommandService, AreaCriticalityLevelCommandService>();
+builder.Services.AddScoped<IAreaCriticalityLevelQueryService, AreaCriticalityLevelQueryService>();
+builder.Services.AddScoped<IDailySummaryRepository, DailySummaryRepository>();
+builder.Services.AddScoped<IDailySummaryCommandService, DailySummaryCommandService>();
+builder.Services.AddScoped<IDailySummaryQueryService, DailySummaryQueryService>();
+
+// Mitigation DI
+builder.Services.AddScoped<IMitigationRepository, MitigationRepository>();
+builder.Services.AddScoped<IMitigationCommandService, MitigationCommandService>();
+builder.Services.AddScoped<IMitigationQueryService, MitigationQueryService>();
+builder.Services.AddScoped<ICorrectiveActionTicketRepository, CorrectiveActionTicketRepository>();
+builder.Services.AddScoped<ICorrectiveActionTicketCommandService, CorrectiveActionTicketCommandService>();
+builder.Services.AddScoped<ICorrectiveActionTicketQueryService, CorrectiveActionTicketQueryService>();
+builder.Services.AddScoped<IMeasureVerificationRepository, MeasureVerificationRepository>();
+builder.Services.AddScoped<IMeasureVerificationCommandService, MeasureVerificationCommandService>();
+builder.Services.AddScoped<IMeasureVerificationQueryService, MeasureVerificationQueryService>();
+builder.Services.AddScoped<ITicketHistoryRepository, TicketHistoryRepository>();
+builder.Services.AddScoped<ITicketHistoryCommandService, TicketHistoryCommandService>();
+builder.Services.AddScoped<ITicketHistoryQueryService, TicketHistoryQueryService>();
+builder.Services.AddScoped<ISlaAlertRepository, SlaAlertRepository>();
+builder.Services.AddScoped<ISlaAlertCommandService, SlaAlertCommandService>();
+builder.Services.AddScoped<ISlaAlertQueryService, SlaAlertQueryService>();
+builder.Services.AddScoped<ICriticalNotificationRepository, CriticalNotificationRepository>();
+builder.Services.AddScoped<ICriticalNotificationCommandService, CriticalNotificationCommandService>();
+builder.Services.AddScoped<ICriticalNotificationQueryService, CriticalNotificationQueryService>();
+
+// Shared Infrastructure
+builder.Services.AddScoped<EventDispatcher>();
+
+// ACL Facades
+builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
+builder.Services.AddScoped<IHazardsContextFacade, HazardsContextFacade>();
+builder.Services.AddScoped<ITechniciansContextFacade, TechniciansContextFacade>();
+builder.Services.AddScoped<IRiskAssessmentsContextFacade, RiskAssessmentsContextFacade>();
 
 var app = builder.Build();
 
+// Localization
 var localizationOptions = new RequestLocalizationOptions()
     .SetDefaultCulture("en")
     .AddSupportedCultures(["en", "es"])
     .AddSupportedUICultures(["en", "es"]);
 app.UseRequestLocalization(localizationOptions);
 
+// Middleware pipeline
 app.UseGlobalExceptionHandler();
 app.UseSwagger();
 app.UseSwaggerUI();
-app.MapOpenApi();
 app.UseCors("RiskGuardCors");
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
+// Database seeding
 if (app.Configuration.GetValue("SeedDatabase", true))
 {
     using var scope = app.Services.CreateScope();

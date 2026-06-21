@@ -1,4 +1,4 @@
-namespace RiskGuard.Platform.Shared.Domain.Repositories;
+namespace Acme.Center.Platform.Shared.Domain.Repositories;
 
 public interface IUnitOfWork
 {

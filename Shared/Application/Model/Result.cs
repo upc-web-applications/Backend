@@ -1,8 +1,8 @@
-namespace RiskGuard.Platform.Shared.Application.Model;
+namespace Acme.Center.Platform.Shared.Application.Model;
 
 public class Result<T>
 {
-    protected Result(bool isSuccess, T? value, string message, string? error)
+    protected Result(bool isSuccess, T? value, string message, object? error)
     {
         IsSuccess = isSuccess;
         Value = value;
@@ -14,14 +14,14 @@ public class Result<T>
     public bool IsFailure => !IsSuccess;
     public T? Value { get; }
     public string Message { get; }
-    public string? Error { get; }
+    public object? Error { get; }
 
     public static Result<T> Success(T value)
     {
         return new Result<T>(true, value, string.Empty, null);
     }
 
-    public static Result<T> Failure(string error, string message)
+    public static Result<T> Failure(object error, string message)
     {
         return new Result<T>(false, default, message, error);
     }
@@ -29,7 +29,7 @@ public class Result<T>
 
 public class Result : Result<object>
 {
-    private Result(bool isSuccess, string message, string? error) : base(isSuccess, null, message, error)
+    private Result(bool isSuccess, string message, object? error) : base(isSuccess, null, message, error)
     {
     }
 
@@ -38,7 +38,7 @@ public class Result : Result<object>
         return new Result(true, string.Empty, null);
     }
 
-    public static Result Failure(string error, string message)
+    public new static Result Failure(object error, string message)
     {
         return new Result(false, message, error);
     }

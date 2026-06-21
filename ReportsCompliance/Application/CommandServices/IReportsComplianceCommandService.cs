@@ -1,8 +1,8 @@
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Commands;
-using RiskGuard.Platform.Shared.Application.Model;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Commands;
+using Acme.Center.Platform.Shared.Application.Model;
 
-namespace RiskGuard.Platform.ReportsCompliance.Application.CommandServices;
+namespace Acme.Center.Platform.ReportsCompliance.Application.CommandServices;
 
 public interface IReportsComplianceCommandService
 {

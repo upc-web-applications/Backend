@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using RiskGuard.Platform.Shared.Domain.Model.Entities;
+using Acme.Center.Platform.Shared.Domain.Model.Entities;
 
-namespace RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
+namespace Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
 
 public class MonthlyReport : IAuditableEntity
 {

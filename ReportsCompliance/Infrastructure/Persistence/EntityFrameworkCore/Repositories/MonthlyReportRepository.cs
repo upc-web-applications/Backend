@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
-using RiskGuard.Platform.ReportsCompliance.Domain.Repositories;
-using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
-using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.ReportsCompliance.Domain.Repositories;
+using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
-namespace RiskGuard.Platform.ReportsCompliance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+namespace Acme.Center.Platform.ReportsCompliance.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 public class MonthlyReportRepository(AppDbContext context) : BaseRepository<MonthlyReport>(context), IMonthlyReportRepository
 {

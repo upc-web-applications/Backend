@@ -1,3 +1,3 @@
-namespace RiskGuard.Platform.Shared.Resources;
+namespace Acme.Center.Platform.Shared.Resources;
 
 public class CommonMessages { }

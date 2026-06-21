@@ -2,10 +2,10 @@ using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
-using RiskGuard.Platform.Shared.Resources;
-using RiskGuard.Platform.Shared.Resources.Errors;
+using Acme.Center.Platform.Shared.Resources;
+using Acme.Center.Platform.Shared.Resources.Errors;
 
-namespace RiskGuard.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
+namespace Acme.Center.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
 
 public class GlobalExceptionHandlerMiddleware(
     RequestDelegate next,

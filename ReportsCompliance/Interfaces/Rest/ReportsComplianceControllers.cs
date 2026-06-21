@@ -1,17 +1,17 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RiskGuard.Platform.ReportsCompliance.Application.CommandServices;
-using RiskGuard.Platform.ReportsCompliance.Application.QueryServices;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Queries;
-using RiskGuard.Platform.ReportsCompliance.Interfaces.Rest.Resources;
-using RiskGuard.Platform.ReportsCompliance.Interfaces.Rest.Transform;
-using RiskGuard.Platform.Shared.Domain.Repositories;
-using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Acme.Center.Platform.ReportsCompliance.Application.CommandServices;
+using Acme.Center.Platform.ReportsCompliance.Application.QueryServices;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Queries;
+using Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Resources;
+using Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Transform;
+using Acme.Center.Platform.Shared.Domain.Repositories;
+using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace RiskGuard.Platform.ReportsCompliance.Interfaces.Rest;
+namespace Acme.Center.Platform.ReportsCompliance.Interfaces.Rest;
 
 // ── MonthlyReports: GET all, GET id, GET year, POST, PUT ──
 
@@ -76,12 +76,12 @@ public class MonthlyReportsController(
     [SwaggerOperation("Update monthly report")]
     [SwaggerResponse(200, "The monthly report was updated.", typeof(MonthlyReportResource))]
     [SwaggerResponse(404, "The monthly report was not found.")]
-    public async Task<IActionResult> Update(string id, [FromBody] MonthlyReport resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(string id, [FromBody] UpdateMonthlyReportResource resource, CancellationToken cancellationToken)
     {
         var existing = await context.Set<MonthlyReport>().FindAsync([id], cancellationToken);
         if (existing is null) return NotFound();
-        resource.Id = id;
-        context.Entry(existing).CurrentValues.SetValues(resource);
+        var entity = UpdateMonthlyReportCommandFromResourceAssembler.ToEntityFromResource(id, resource);
+        context.Entry(existing).CurrentValues.SetValues(entity);
         await unitOfWork.CompleteAsync(cancellationToken);
         return Ok(MonthlyReportResourceFromEntityAssembler.ToResourceFromEntity(existing));
     }
@@ -172,12 +172,12 @@ public class HistoricalIncidentRecordsController(
     [SwaggerOperation("Update historical incident record")]
     [SwaggerResponse(200, "The record was updated.", typeof(HistoricalIncidentRecordResource))]
     [SwaggerResponse(404, "The record was not found.")]
-    public async Task<IActionResult> Update(string id, [FromBody] HistoricalIncidentRecord resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(string id, [FromBody] UpdateHistoricalIncidentRecordResource resource, CancellationToken cancellationToken)
     {
         var existing = await context.Set<HistoricalIncidentRecord>().FindAsync([id], cancellationToken);
         if (existing is null) return NotFound();
-        resource.Id = id;
-        context.Entry(existing).CurrentValues.SetValues(resource);
+        var entity = UpdateHistoricalIncidentRecordCommandFromResourceAssembler.ToEntityFromResource(id, resource);
+        context.Entry(existing).CurrentValues.SetValues(entity);
         await unitOfWork.CompleteAsync(cancellationToken);
         return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(existing));
     }
@@ -221,12 +221,12 @@ public class AnnualOhsPlanController(
     [SwaggerOperation("Update annual OHS plan")]
     [SwaggerResponse(200, "The plan was updated.", typeof(AnnualOhsPlanResource))]
     [SwaggerResponse(404, "The plan was not found.")]
-    public async Task<IActionResult> Update(string id, [FromBody] AnnualOhsPlan resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(string id, [FromBody] UpdateAnnualOhsPlanResource resource, CancellationToken cancellationToken)
     {
         var existing = await context.Set<AnnualOhsPlan>().FindAsync([id], cancellationToken);
         if (existing is null) return NotFound();
-        resource.Id = id;
-        context.Entry(existing).CurrentValues.SetValues(resource);
+        var entity = UpdateAnnualOhsPlanCommandFromResourceAssembler.ToEntityFromResource(id, resource);
+        context.Entry(existing).CurrentValues.SetValues(entity);
         await unitOfWork.CompleteAsync(cancellationToken);
         return Ok(AnnualOhsPlanResourceFromEntityAssembler.ToResourceFromEntity(existing));
     }
@@ -303,12 +303,12 @@ public class CriticalAlertsController(
     [SwaggerOperation("Update critical alert")]
     [SwaggerResponse(200, "The alert was updated.", typeof(CriticalAlertResource))]
     [SwaggerResponse(404, "The alert was not found.")]
-    public async Task<IActionResult> Update(string id, [FromBody] CriticalAlert resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(string id, [FromBody] UpdateCriticalAlertResource resource, CancellationToken cancellationToken)
     {
         var existing = await context.Set<CriticalAlert>().FindAsync([id], cancellationToken);
         if (existing is null) return NotFound();
-        resource.Id = id;
-        context.Entry(existing).CurrentValues.SetValues(resource);
+        var entity = UpdateCriticalAlertCommandFromResourceAssembler.ToEntityFromResource(id, resource);
+        context.Entry(existing).CurrentValues.SetValues(entity);
         await unitOfWork.CompleteAsync(cancellationToken);
         return Ok(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity(existing));
     }

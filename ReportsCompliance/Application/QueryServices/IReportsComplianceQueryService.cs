@@ -1,7 +1,7 @@
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Aggregates;
-using RiskGuard.Platform.ReportsCompliance.Domain.Model.Queries;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
+using Acme.Center.Platform.ReportsCompliance.Domain.Model.Queries;
 
-namespace RiskGuard.Platform.ReportsCompliance.Application.QueryServices;
+namespace Acme.Center.Platform.ReportsCompliance.Application.QueryServices;
 
 public interface IReportsComplianceQueryService
 {

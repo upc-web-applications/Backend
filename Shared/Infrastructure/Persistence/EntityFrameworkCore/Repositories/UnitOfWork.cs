@@ -1,7 +1,7 @@
-using RiskGuard.Platform.Shared.Domain.Repositories;
-using RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Acme.Center.Platform.Shared.Domain.Repositories;
+using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
-namespace RiskGuard.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+namespace Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 public class UnitOfWork(AppDbContext context) : IUnitOfWork
 {
