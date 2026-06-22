@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: riskguard-platform
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: TokenSettings__Secret
+        sync: false
+      - key: SeedDatabase
+        value: "true"
