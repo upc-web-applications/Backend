@@ -7,6 +7,8 @@ public static class HistoricalIncidentRecordResourceFromEntityAssembler
 {
     public static HistoricalIncidentRecordResource ToResourceFromEntity(HistoricalIncidentRecord entity)
     {
-        return new HistoricalIncidentRecordResource(entity.Id, entity.Sector, entity.IncidentType, entity.Criticality, entity.IncidentDate);
+        return new HistoricalIncidentRecordResource(
+            entity.Id, entity.Sector, entity.IncidentType, entity.Criticality, entity.IncidentDate,
+            entity.Description, entity.Resolved, entity.ClosingDate, entity.ResolutionTimeHours, entity.OperatorId);
     }
 }

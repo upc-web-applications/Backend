@@ -4,4 +4,9 @@ public record UpdateHistoricalIncidentRecordResource(
     string Sector,
     string IncidentType,
     string Criticality,
-    DateTime IncidentDate);
+    DateTime IncidentDate,
+    string Description,
+    bool Resolved,
+    DateTime? ClosingDate,
+    int? ResolutionTimeHours,
+    string? OperatorId);

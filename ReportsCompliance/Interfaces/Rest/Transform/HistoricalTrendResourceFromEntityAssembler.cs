@@ -7,6 +7,9 @@ public static class HistoricalTrendResourceFromEntityAssembler
 {
     public static HistoricalTrendResource ToResourceFromEntity(HistoricalTrend entity)
     {
-        return new HistoricalTrendResource(entity.Id, entity.Month, entity.Year, entity.TotalIncidents, entity.Sector, entity.Type);
+        return new HistoricalTrendResource(
+            entity.Id, entity.Month, entity.Year, entity.TotalIncidents,
+            new Dictionary<string, int> { [entity.Type] = entity.TotalIncidents },
+            new Dictionary<string, int> { [entity.Sector] = entity.TotalIncidents });
     }
 }

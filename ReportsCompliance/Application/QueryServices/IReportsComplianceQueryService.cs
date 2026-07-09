@@ -5,11 +5,6 @@ namespace Acme.Center.Platform.ReportsCompliance.Application.QueryServices;
 
 public interface IReportsComplianceQueryService
 {
-    Task<IEnumerable<MonthlyReport>> Handle(GetAllMonthlyReportsQuery query, CancellationToken cancellationToken);
-    Task<MonthlyReport?> Handle(GetMonthlyReportByIdQuery query, CancellationToken cancellationToken);
-    Task<IEnumerable<MonthlyReport>> Handle(GetMonthlyReportsByYearQuery query, CancellationToken cancellationToken);
-    Task<IEnumerable<CumulativeStIndicator>> Handle(GetAllCumulativeStIndicatorsQuery query, CancellationToken cancellationToken);
-    Task<CumulativeStIndicator?> Handle(GetCumulativeStIndicatorByIdQuery query, CancellationToken cancellationToken);
     Task<IEnumerable<HistoricalIncidentRecord>> Handle(GetAllHistoricalIncidentRecordsQuery query, CancellationToken cancellationToken);
     Task<HistoricalIncidentRecord?> Handle(GetHistoricalIncidentRecordByIdQuery query, CancellationToken cancellationToken);
     Task<IEnumerable<AnnualOhsPlan>> Handle(GetAllAnnualOhsPlansQuery query, CancellationToken cancellationToken);

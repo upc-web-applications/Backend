@@ -3,27 +3,6 @@ using Acme.Center.Platform.Shared.Domain.Model.Entities;
 
 namespace Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
 
-public class MonthlyReport : IAuditableEntity
-{
-    public string Id { get; set; } = Guid.NewGuid().ToString("N");
-    public int Month { get; set; }
-    public int Year { get; set; }
-    public string Status { get; set; } = "generated";
-    public DateTime CreationDate { get; set; } = DateTime.UtcNow;
-    public DateTimeOffset? CreatedAt { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
-}
-
-public class CumulativeStIndicator : IAuditableEntity
-{
-    public string Id { get; set; } = Guid.NewGuid().ToString("N");
-    public string Name { get; set; } = string.Empty;
-    public decimal Value { get; set; }
-    public string Status { get; set; } = "ok";
-    public DateTimeOffset? CreatedAt { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
-}
-
 public class HistoricalIncidentRecord : IAuditableEntity
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -31,6 +10,11 @@ public class HistoricalIncidentRecord : IAuditableEntity
     public string IncidentType { get; set; } = string.Empty;
     public string Criticality { get; set; } = string.Empty;
     public DateTime IncidentDate { get; set; } = DateTime.UtcNow;
+    public string Description { get; set; } = string.Empty;
+    public bool Resolved { get; set; } = false;
+    public DateTime? ClosingDate { get; set; }
+    public int? ResolutionTimeHours { get; set; }
+    public string? OperatorId { get; set; }
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }
@@ -81,6 +65,10 @@ public class CriticalAlert : IAuditableEntity
     public int ElapsedHours { get; set; }
 
     public string Status { get; set; } = "active";
+
+    [JsonPropertyName("responsible_supervisor")]
+    public string ResponsibleSupervisor { get; set; } = string.Empty;
+
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }
@@ -100,6 +88,19 @@ public class GeneratedReport : IAuditableEntity
     public string FileName { get; set; } = string.Empty;
 
     public string Status { get; set; } = "generated";
+
+    [JsonPropertyName("start_date")]
+    public DateTime? StartDate { get; set; }
+
+    [JsonPropertyName("end_date")]
+    public DateTime? EndDate { get; set; }
+
+    [JsonPropertyName("sector_filter")]
+    public string? SectorFilter { get; set; }
+
+    [JsonPropertyName("size_kb")]
+    public int? SizeKb { get; set; }
+
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }
