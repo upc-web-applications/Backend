@@ -278,7 +278,39 @@ public class CriticalAlertsController(
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
-        return Ok(OperationalReportsCalculator.BuildCriticalAlerts(tickets));
+        var candidates = OperationalReportsCalculator.BuildCriticalAlerts(tickets);
+
+        var alerts = await context.Set<CriticalAlert>().ToListAsync(cancellationToken);
+        var alertsById = alerts.ToDictionary(alert => alert.Id);
+
+        foreach (var candidate in candidates)
+        {
+            if (alertsById.TryGetValue(candidate.Id, out var existingAlert))
+            {
+                existingAlert.ElapsedHours = candidate.ElapsedHours;
+                existingAlert.Message = candidate.Message;
+            }
+            else
+            {
+                var newAlert = new CriticalAlert
+                {
+                    Id = candidate.Id,
+                    Type = candidate.Type,
+                    Sector = candidate.Sector,
+                    RiskType = candidate.RiskType,
+                    Message = candidate.Message,
+                    ElapsedHours = candidate.ElapsedHours,
+                    Status = "active",
+                    ResponsibleSupervisor = candidate.ResponsibleSupervisor
+                };
+                await context.Set<CriticalAlert>().AddAsync(newAlert, cancellationToken);
+                alerts.Add(newAlert);
+            }
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return Ok(alerts.Select(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity));
     }
 
     [HttpGet("{id}")]
