@@ -88,6 +88,19 @@ public class GeneratedReport : IAuditableEntity
     public string FileName { get; set; } = string.Empty;
 
     public string Status { get; set; } = "generated";
+
+    [JsonPropertyName("start_date")]
+    public DateTime? StartDate { get; set; }
+
+    [JsonPropertyName("end_date")]
+    public DateTime? EndDate { get; set; }
+
+    [JsonPropertyName("sector_filter")]
+    public string? SectorFilter { get; set; }
+
+    [JsonPropertyName("size_kb")]
+    public int? SizeKb { get; set; }
+
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }

@@ -7,6 +7,8 @@ public static class AnnualOhsPlanResourceFromEntityAssembler
 {
     public static AnnualOhsPlanResource ToResourceFromEntity(AnnualOhsPlan entity)
     {
-        return new AnnualOhsPlanResource(entity.Id, entity.Year, entity.GlobalCompliance, entity.Goal, entity.CompletedActivities, entity.TotalActivities);
+        return new AnnualOhsPlanResource(
+            entity.Id, entity.Year, entity.GlobalCompliance, entity.Goal, entity.CompletedActivities, entity.TotalActivities,
+            0, entity.CreatedAt?.UtcDateTime ?? DateTime.UtcNow, [], [], null);
     }
 }

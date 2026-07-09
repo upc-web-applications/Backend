@@ -14,17 +14,15 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace Acme.Center.Platform.ReportsCompliance.Interfaces.Rest;
 
-// ── HistoricalIncidentRecords: GET all, GET id, POST, PUT ──
+// ── HistoricalIncidentRecords: GET all, GET id (calculado en vivo desde tickets, solo lectura) ──
 
 [ApiController]
 [Route("api/v1/historical_incident_records")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Historical Incident Records Endpoints")]
 public class HistoricalIncidentRecordsController(
-    IReportsComplianceCommandService commandService,
     IReportsComplianceQueryService queryService,
-    AppDbContext context,
-    IUnitOfWork unitOfWork) : ControllerBase
+    AppDbContext context) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all historical incident records")]
@@ -45,33 +43,6 @@ public class HistoricalIncidentRecordsController(
         var item = await queryService.Handle(query, cancellationToken);
         if (item is null) return NotFound();
         return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(item));
-    }
-
-    [HttpPost]
-    [SwaggerOperation("Create historical incident record")]
-    [SwaggerResponse(201, "The record was created.", typeof(HistoricalIncidentRecordResource))]
-    [SwaggerResponse(400, "The record was not created.")]
-    public async Task<IActionResult> Create([FromBody] CreateHistoricalIncidentRecordResource resource, CancellationToken cancellationToken)
-    {
-        var command = CreateHistoricalIncidentRecordCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await commandService.Handle(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-        var created = HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-    }
-
-    [HttpPut("{id}")]
-    [SwaggerOperation("Update historical incident record")]
-    [SwaggerResponse(200, "The record was updated.", typeof(HistoricalIncidentRecordResource))]
-    [SwaggerResponse(404, "The record was not found.")]
-    public async Task<IActionResult> Update(string id, [FromBody] UpdateHistoricalIncidentRecordResource resource, CancellationToken cancellationToken)
-    {
-        var existing = await context.Set<HistoricalIncidentRecord>().FindAsync([id], cancellationToken);
-        if (existing is null) return NotFound();
-        var entity = UpdateHistoricalIncidentRecordCommandFromResourceAssembler.ToEntityFromResource(id, resource);
-        context.Entry(existing).CurrentValues.SetValues(entity);
-        await unitOfWork.CompleteAsync(cancellationToken);
-        return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(existing));
     }
 }
 
@@ -413,9 +384,38 @@ internal static class OperationalReportsCalculator
         var total = annualTickets.Count;
         var completed = annualTickets.Count(IsClosed);
 
+        var monthlyDetails = annualTickets
+            .GroupBy(ticket => ticket.CreatedDate.Month)
+            .OrderBy(group => group.Key)
+            .Select(group =>
+            {
+                var planned = group.Count();
+                var done = group.Count(IsClosed);
+                var compliance = (int)CalculatePercentage(done, planned);
+                var status = compliance >= 80 ? "optimal" : compliance >= 50 ? "acceptable" : "critical";
+                return new MonthlyOhsDetailResource(group.Key, done, planned, compliance, status);
+            })
+            .ToList();
+
+        var detailsBySector = annualTickets
+            .Where(ticket => !string.IsNullOrWhiteSpace(ticket.Sector))
+            .GroupBy(ticket => ticket.Sector.Trim(), StringComparer.OrdinalIgnoreCase)
+            .OrderBy(group => group.Key)
+            .Select(group =>
+            {
+                var planned = group.Count();
+                var done = group.Count(IsClosed);
+                return new SectorOhsDetailResource(group.Key, done, planned, (int)CalculatePercentage(done, planned));
+            })
+            .ToList();
+
+        var criticalMonths = monthlyDetails.Count(month => month.Compliance < 50);
+
         return new[]
         {
-            new AnnualOhsPlanResource($"ohs-{year}", year, CalculatePercentage(completed, total), OhsGoal, completed, total)
+            new AnnualOhsPlanResource(
+                $"ohs-{year}", year, CalculatePercentage(completed, total), OhsGoal, completed, total,
+                criticalMonths, DateTime.UtcNow, monthlyDetails, detailsBySector, null)
         };
     }
 
@@ -510,7 +510,8 @@ internal static class OperationalReportsCalculator
                     message,
                     elapsedHours,
                     "active",
-                    NormalizeText(ticket.TechnicianName, "Sin asignar"));
+                    NormalizeText(ticket.TechnicianName, "Sin asignar"),
+                    ticket.CreatedDate);
             });
     }
 
@@ -549,23 +550,26 @@ internal static class OperationalReportsCalculator
     public static IEnumerable<HistoricalTrendResource> BuildHistoricalTrends(IReadOnlyCollection<CorrectiveActionTicket> tickets)
     {
         return tickets
-            .GroupBy(ticket => new
-            {
-                ticket.CreatedDate.Month,
-                ticket.CreatedDate.Year,
-                Sector = NormalizeText(ticket.Sector, "Sin sector"),
-                Type = NormalizeText(ticket.RiskType, "Sin tipo")
-            })
+            .GroupBy(ticket => new { ticket.CreatedDate.Month, ticket.CreatedDate.Year })
             .OrderBy(group => group.Key.Year)
             .ThenBy(group => group.Key.Month)
-            .ThenBy(group => group.Key.Sector)
-            .Select(group => new HistoricalTrendResource(
-                $"{group.Key.Year}-{group.Key.Month:00}-{Slug(group.Key.Sector)}-{Slug(group.Key.Type)}",
-                group.Key.Month,
-                group.Key.Year,
-                group.Count(),
-                group.Key.Sector,
-                group.Key.Type));
+            .Select(group =>
+            {
+                var incidentsByType = group
+                    .GroupBy(ticket => NormalizeText(ticket.RiskType, "Sin tipo"), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.Count());
+                var incidentsBySector = group
+                    .GroupBy(ticket => NormalizeText(ticket.Sector, "Sin sector"), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                return new HistoricalTrendResource(
+                    $"TREND_{group.Key.Year}_{group.Key.Month:00}",
+                    group.Key.Month,
+                    group.Key.Year,
+                    group.Count(),
+                    incidentsByType,
+                    incidentsBySector);
+            });
     }
 
     private static bool IsClosed(CorrectiveActionTicket ticket)
@@ -589,11 +593,5 @@ internal static class OperationalReportsCalculator
     private static string NormalizeText(string value, string fallback)
     {
         return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
-    }
-
-    private static string Slug(string value)
-    {
-        return new string(value.ToLowerInvariant().Select(character => char.IsLetterOrDigit(character) ? character : '-').ToArray())
-            .Trim('-');
     }
 }
