@@ -29,8 +29,6 @@ namespace Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFramework
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     // ReportsCompliance
-    public DbSet<MonthlyReport> MonthlyReports => Set<MonthlyReport>();
-    public DbSet<CumulativeStIndicator> CumulativeStIndicators => Set<CumulativeStIndicator>();
     public DbSet<HistoricalIncidentRecord> HistoricalIncidentRecords => Set<HistoricalIncidentRecord>();
     public DbSet<AnnualOhsPlan> AnnualOhsPlans => Set<AnnualOhsPlan>();
     public DbSet<PredictiveIndicator> PredictiveIndicators => Set<PredictiveIndicator>();

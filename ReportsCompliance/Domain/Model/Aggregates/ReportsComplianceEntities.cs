@@ -3,27 +3,6 @@ using Acme.Center.Platform.Shared.Domain.Model.Entities;
 
 namespace Acme.Center.Platform.ReportsCompliance.Domain.Model.Aggregates;
 
-public class MonthlyReport : IAuditableEntity
-{
-    public string Id { get; set; } = Guid.NewGuid().ToString("N");
-    public int Month { get; set; }
-    public int Year { get; set; }
-    public string Status { get; set; } = "generated";
-    public DateTime CreationDate { get; set; } = DateTime.UtcNow;
-    public DateTimeOffset? CreatedAt { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
-}
-
-public class CumulativeStIndicator : IAuditableEntity
-{
-    public string Id { get; set; } = Guid.NewGuid().ToString("N");
-    public string Name { get; set; } = string.Empty;
-    public decimal Value { get; set; }
-    public string Status { get; set; } = "ok";
-    public DateTimeOffset? CreatedAt { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
-}
-
 public class HistoricalIncidentRecord : IAuditableEntity
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");

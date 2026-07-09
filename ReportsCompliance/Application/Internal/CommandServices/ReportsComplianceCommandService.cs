@@ -14,36 +14,6 @@ namespace Acme.Center.Platform.ReportsCompliance.Application.Internal.CommandSer
 public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork unitOfWork, IStringLocalizer<ErrorMessage> localizer)
     : IReportsComplianceCommandService
 {
-    public async Task<Result<MonthlyReport>> Handle(CreateMonthlyReportCommand command, CancellationToken cancellationToken)
-    {
-        var entity = new MonthlyReport { Month = command.Month, Year = command.Year };
-        try
-        {
-            await context.MonthlyReports.AddAsync(entity, cancellationToken);
-            await unitOfWork.CompleteAsync(cancellationToken);
-            return Result<MonthlyReport>.Success(entity);
-        }
-        catch (DbUpdateException)
-        {
-            return Result<MonthlyReport>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
-        }
-    }
-
-    public async Task<Result<CumulativeStIndicator>> Handle(CreateCumulativeStIndicatorCommand command, CancellationToken cancellationToken)
-    {
-        var entity = new CumulativeStIndicator { Name = command.Name, Value = command.Value, Status = command.Status };
-        try
-        {
-            await context.CumulativeStIndicators.AddAsync(entity, cancellationToken);
-            await unitOfWork.CompleteAsync(cancellationToken);
-            return Result<CumulativeStIndicator>.Success(entity);
-        }
-        catch (DbUpdateException)
-        {
-            return Result<CumulativeStIndicator>.Failure(ReportsComplianceError.DatabaseError, localizer[nameof(ReportsComplianceError.DatabaseError)]);
-        }
-    }
-
     public async Task<Result<HistoricalIncidentRecord>> Handle(CreateHistoricalIncidentRecordCommand command, CancellationToken cancellationToken)
     {
         var entity = new HistoricalIncidentRecord
