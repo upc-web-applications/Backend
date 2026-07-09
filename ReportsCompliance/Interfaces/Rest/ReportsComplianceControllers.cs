@@ -496,7 +496,44 @@ internal static class OperationalReportsCalculator
 
     public static IEnumerable<PredictiveIndicatorResource> BuildPredictiveIndicators(IReadOnlyCollection<CorrectiveActionTicket> tickets)
     {
-        var active = tickets.Count(ticket => !IsClosed(ticket));
+        var now = DateTime.UtcNow;
+
+        int ElapsedHours(CorrectiveActionTicket ticket) =>
+            Math.Max(0, (int)Math.Round(((ticket.ClosureDate ?? now) - ticket.CreatedDate).TotalHours));
+
+        var activeTickets = tickets.Where(ticket => !IsClosed(ticket)).ToList();
+        var resolvedTickets = tickets.Where(IsClosed).ToList();
+
+        var sectorsWithTrend = activeTickets
+            .GroupBy(ticket => NormalizeText(ticket.Sector, "Sin sector"), StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var events = group.Count();
+                var maxElapsed = group.Max(ElapsedHours);
+                var variation = Math.Max(10, Math.Min(99, events * 15 + (int)Math.Round(maxElapsed / 8.0)));
+                var status = maxElapsed >= 48 || events >= 3 ? "critical" : "alert";
+                return new SectorTrendResource(group.Key, events, variation, status);
+            })
+            .ToList();
+
+        var recurringTypes = tickets
+            .GroupBy(ticket => NormalizeText(ticket.RiskType, "Sin tipo"), StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var count = group.Count();
+                var percentage = tickets.Count > 0 ? (int)Math.Round((decimal)count / tickets.Count * 100) : 0;
+                var trend = count >= 2 ? "increasing" : "stable";
+                return new RecurringIncidentTypeResource(group.Key, count, percentage, trend);
+            })
+            .ToList();
+
+        var avgResolution = resolvedTickets.Count > 0
+            ? (int)Math.Round(resolvedTickets.Average(ElapsedHours))
+            : activeTickets.Count > 0
+                ? (int)Math.Round(activeTickets.Average(ElapsedHours))
+                : 0;
+
+        var active = activeTickets.Count;
         var slaMissed = tickets.Count(ticket => ticket.SlaMissed);
         var recurringSector = tickets
             .Where(ticket => !string.IsNullOrWhiteSpace(ticket.Sector))
@@ -505,12 +542,26 @@ internal static class OperationalReportsCalculator
             .Select(group => group.Key)
             .FirstOrDefault() ?? "Sin sector recurrente";
 
-        var trend = slaMissed > 0 || active > 0 ? "Alerta" : "Estable";
+        var trendLabel = slaMissed > 0 || active > 0 ? "Alerta" : "Estable";
         var description = $"{active} tickets correctivos activos, {slaMissed} con SLA incumplido. Sector con mayor recurrencia: {recurringSector}.";
 
         return new[]
         {
-            new PredictiveIndicatorResource("LIVE_CORRECTIVE_FLOW", "Riesgo operativo actual", description, active, trend)
+            new PredictiveIndicatorResource(
+                "LIVE_CORRECTIVE_FLOW",
+                "Riesgo operativo actual",
+                description,
+                active,
+                trendLabel,
+                now,
+                30,
+                tickets.Count,
+                Math.Max(0, active * 10),
+                avgResolution,
+                24,
+                sectorsWithTrend,
+                recurringTypes,
+                Array.Empty<object>())
         };
     }
 
