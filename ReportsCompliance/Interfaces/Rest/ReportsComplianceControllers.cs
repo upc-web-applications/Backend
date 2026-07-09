@@ -9,6 +9,7 @@ using Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Resources;
 using Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Transform;
 using Acme.Center.Platform.Shared.Domain.Repositories;
 using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using CorrectiveActionTicket = Acme.Center.Platform.Mitigations.Domain.Model.Aggregates.CorrectiveActionTicket;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Acme.Center.Platform.ReportsCompliance.Interfaces.Rest;
@@ -137,10 +138,8 @@ public class HistoricalIncidentRecordsController(
     [SwaggerResponse(200, "The records were found.", typeof(IEnumerable<HistoricalIncidentRecordResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllHistoricalIncidentRecordsQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildHistoricalIncidentRecords(tickets));
     }
 
     [HttpGet("{id}")]
@@ -199,10 +198,8 @@ public class AnnualOhsPlanController(
     [SwaggerResponse(200, "The plans were found.", typeof(IEnumerable<AnnualOhsPlanResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllAnnualOhsPlansQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(AnnualOhsPlanResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildAnnualOhsPlan(tickets));
     }
 
     [HttpGet("{id}")]
@@ -239,17 +236,16 @@ public class AnnualOhsPlanController(
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Predictive Indicators Endpoints")]
 public class PredictiveIndicatorsController(
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all predictive indicators")]
     [SwaggerResponse(200, "The indicators were found.", typeof(IEnumerable<PredictiveIndicatorResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllPredictiveIndicatorsQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(PredictiveIndicatorResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildPredictiveIndicators(tickets));
     }
 
     [HttpGet("{id}")]
@@ -281,10 +277,8 @@ public class CriticalAlertsController(
     [SwaggerResponse(200, "The alerts were found.", typeof(IEnumerable<CriticalAlertResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllCriticalAlertsQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildCriticalAlerts(tickets));
     }
 
     [HttpGet("{id}")]
@@ -396,17 +390,16 @@ public class GeneratedReportsController(
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("KPI Dashboard Endpoints")]
 public class KpiDashboardController(
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all KPI dashboard entries")]
     [SwaggerResponse(200, "The KPI entries were found.", typeof(IEnumerable<KpiDashboardResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllKpiDashboardQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(KpiDashboardResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildKpiDashboard(tickets));
     }
 
     [HttpGet("{id}")]
@@ -429,17 +422,16 @@ public class KpiDashboardController(
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Historical Trends Endpoints")]
 public class HistoricalTrendsController(
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all historical trends")]
     [SwaggerResponse(200, "The trends were found.", typeof(IEnumerable<HistoricalTrendResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllHistoricalTrendsQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(HistoricalTrendResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildHistoricalTrends(tickets));
     }
 
     [HttpGet("{id}")]
@@ -452,5 +444,180 @@ public class HistoricalTrendsController(
         var item = await queryService.Handle(query, cancellationToken);
         if (item is null) return NotFound();
         return Ok(HistoricalTrendResourceFromEntityAssembler.ToResourceFromEntity(item));
+    }
+}
+
+internal static class OperationalReportsCalculator
+{
+    private const decimal OhsGoal = 80m;
+    private const decimal ResolvedGoal = 10m;
+
+    public static async Task<List<CorrectiveActionTicket>> LoadCorrectiveTicketsAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        return await context.Set<CorrectiveActionTicket>()
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
+    public static IEnumerable<KpiDashboardResource> BuildKpiDashboard(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        var total = tickets.Count;
+        var resolved = tickets.Count(IsClosed);
+        var active = total - resolved;
+        var criticalSectors = tickets
+            .Where(ticket => !IsClosed(ticket) && (IsCritical(ticket) || ticket.SlaMissed))
+            .Select(ticket => NormalizeText(ticket.Sector, "Sin sector"))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+        var compliance = CalculatePercentage(resolved, total);
+        var now = DateTime.UtcNow;
+
+        return new[]
+        {
+            new KpiDashboardResource("active_incidents", "Incidentes activos", active, 0, active == 0 ? "Alerta" : "Critico", now),
+            new KpiDashboardResource("resolved_incidents", "Incidentes resueltos", resolved, ResolvedGoal, resolved >= ResolvedGoal ? "Alerta" : "Critico", now),
+            new KpiDashboardResource("critical_sectors", "Sectores criticos", criticalSectors, 0, criticalSectors == 0 ? "Alerta" : "Critico", now),
+            new KpiDashboardResource("ohs_plan_compliance", "Cumplimiento Plan SST", compliance, OhsGoal, compliance >= OhsGoal ? "Alerta" : "Critico", now)
+        };
+    }
+
+    public static IEnumerable<AnnualOhsPlanResource> BuildAnnualOhsPlan(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        var year = DateTime.UtcNow.Year;
+        var annualTickets = tickets.Where(ticket => ticket.CreatedDate.Year == year).ToList();
+        var total = annualTickets.Count;
+        var completed = annualTickets.Count(IsClosed);
+
+        return new[]
+        {
+            new AnnualOhsPlanResource($"ohs-{year}", year, CalculatePercentage(completed, total), OhsGoal, completed, total)
+        };
+    }
+
+    public static IEnumerable<PredictiveIndicatorResource> BuildPredictiveIndicators(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        var active = tickets.Count(ticket => !IsClosed(ticket));
+        var slaMissed = tickets.Count(ticket => ticket.SlaMissed);
+        var recurringSector = tickets
+            .Where(ticket => !string.IsNullOrWhiteSpace(ticket.Sector))
+            .GroupBy(ticket => ticket.Sector.Trim(), StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(group => group.Count())
+            .Select(group => group.Key)
+            .FirstOrDefault() ?? "Sin sector recurrente";
+
+        var trend = slaMissed > 0 || active > 0 ? "Alerta" : "Estable";
+        var description = $"{active} tickets correctivos activos, {slaMissed} con SLA incumplido. Sector con mayor recurrencia: {recurringSector}.";
+
+        return new[]
+        {
+            new PredictiveIndicatorResource("LIVE_CORRECTIVE_FLOW", "Riesgo operativo actual", description, active, trend)
+        };
+    }
+
+    public static IEnumerable<CriticalAlertResource> BuildCriticalAlerts(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        return tickets
+            .Where(ticket => !IsClosed(ticket) && (IsCritical(ticket) || ticket.SlaMissed))
+            .Select(ticket =>
+            {
+                var elapsedHours = Math.Max(0, (int)Math.Floor((DateTime.UtcNow - ticket.CreatedDate).TotalHours));
+                var type = ticket.SlaMissed ? "SLA" : "CRITICAL";
+                var message = ticket.SlaMissed
+                    ? $"Ticket correctivo #{ticket.TicketNumber} con SLA incumplido requiere decision administrativa."
+                    : $"Ticket correctivo #{ticket.TicketNumber} critico requiere decision administrativa.";
+
+                return new CriticalAlertResource(
+                    $"OP-COR-{ticket.TicketNumber}",
+                    type,
+                    NormalizeText(ticket.Sector, "Sin sector"),
+                    NormalizeText(ticket.RiskType, "Sin tipo"),
+                    message,
+                    elapsedHours,
+                    "active",
+                    NormalizeText(ticket.TechnicianName, "Sin asignar"));
+            });
+    }
+
+    public static IEnumerable<HistoricalIncidentRecordResource> BuildHistoricalIncidentRecords(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        return tickets.Select(ticket =>
+        {
+            var closed = IsClosed(ticket);
+            int? resolutionHours = closed && ticket.ClosureDate.HasValue
+                ? Math.Max(0, (int)Math.Round((ticket.ClosureDate.Value - ticket.CreatedDate).TotalHours))
+                : null;
+
+            return new HistoricalIncidentRecordResource(
+                $"INC-COR-{ticket.TicketNumber}",
+                NormalizeText(ticket.Sector, "Sin sector"),
+                NormalizeText(ticket.RiskType, "Sin tipo"),
+                NormalizeCriticality(ticket.CriticalityLevel),
+                ticket.CreatedDate,
+                string.IsNullOrWhiteSpace(ticket.Instructions) ? $"Ticket correctivo #{ticket.TicketNumber} requiere seguimiento." : ticket.Instructions,
+                closed,
+                closed ? ticket.ClosureDate : null,
+                resolutionHours,
+                string.IsNullOrWhiteSpace(ticket.AssignedTechnicianId) ? null : $"OP_{ticket.AssignedTechnicianId}");
+        });
+    }
+
+    private static string NormalizeCriticality(string value)
+    {
+        var normalized = value.Trim().ToLowerInvariant();
+        if (normalized.Contains("critico") || normalized.Contains("crítico") || normalized.Contains("critical")) return "CRITICAL";
+        if (normalized.Contains("importante") || normalized.Contains("alto")) return "HIGH";
+        if (normalized.Contains("moderado") || normalized.Contains("medio")) return "MEDIUM";
+        return "LOW";
+    }
+
+    public static IEnumerable<HistoricalTrendResource> BuildHistoricalTrends(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        return tickets
+            .GroupBy(ticket => new
+            {
+                ticket.CreatedDate.Month,
+                ticket.CreatedDate.Year,
+                Sector = NormalizeText(ticket.Sector, "Sin sector"),
+                Type = NormalizeText(ticket.RiskType, "Sin tipo")
+            })
+            .OrderBy(group => group.Key.Year)
+            .ThenBy(group => group.Key.Month)
+            .ThenBy(group => group.Key.Sector)
+            .Select(group => new HistoricalTrendResource(
+                $"{group.Key.Year}-{group.Key.Month:00}-{Slug(group.Key.Sector)}-{Slug(group.Key.Type)}",
+                group.Key.Month,
+                group.Key.Year,
+                group.Count(),
+                group.Key.Sector,
+                group.Key.Type));
+    }
+
+    private static bool IsClosed(CorrectiveActionTicket ticket)
+    {
+        return ticket.Status.Contains("cerrado", StringComparison.OrdinalIgnoreCase)
+               || ticket.Status.Contains("closed", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsCritical(CorrectiveActionTicket ticket)
+    {
+        return ticket.CriticalityLevel.Contains("critico", StringComparison.OrdinalIgnoreCase)
+               || ticket.CriticalityLevel.Contains("crítico", StringComparison.OrdinalIgnoreCase)
+               || ticket.CriticalityLevel.Contains("critical", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static decimal CalculatePercentage(int partial, int total)
+    {
+        return total == 0 ? 0 : Math.Round((decimal)partial / total * 100, 0);
+    }
+
+    private static string NormalizeText(string value, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+    }
+
+    private static string Slug(string value)
+    {
+        return new string(value.ToLowerInvariant().Select(character => char.IsLetterOrDigit(character) ? character : '-').ToArray())
+            .Trim('-');
     }
 }

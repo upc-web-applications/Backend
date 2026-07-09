@@ -46,7 +46,12 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
 
     public async Task<Result<HistoricalIncidentRecord>> Handle(CreateHistoricalIncidentRecordCommand command, CancellationToken cancellationToken)
     {
-        var entity = new HistoricalIncidentRecord { Sector = command.Sector, IncidentType = command.IncidentType, Criticality = command.Criticality };
+        var entity = new HistoricalIncidentRecord
+        {
+            Sector = command.Sector, IncidentType = command.IncidentType, Criticality = command.Criticality,
+            Description = command.Description, Resolved = command.Resolved, ClosingDate = command.ClosingDate,
+            ResolutionTimeHours = command.ResolutionTimeHours, OperatorId = command.OperatorId
+        };
         try
         {
             await context.HistoricalIncidentRecords.AddAsync(entity, cancellationToken);
@@ -98,7 +103,7 @@ public class ReportsComplianceCommandService(AppDbContext context, IUnitOfWork u
         var entity = new CriticalAlert
         {
             Type = command.Type, Sector = command.Sector, RiskType = command.RiskType,
-            Message = command.Message, ElapsedHours = command.ElapsedHours
+            Message = command.Message, ElapsedHours = command.ElapsedHours, ResponsibleSupervisor = command.ResponsibleSupervisor
         };
         try
         {

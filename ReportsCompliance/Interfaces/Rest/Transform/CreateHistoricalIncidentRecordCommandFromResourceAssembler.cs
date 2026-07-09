@@ -7,6 +7,8 @@ public static class CreateHistoricalIncidentRecordCommandFromResourceAssembler
 {
     public static CreateHistoricalIncidentRecordCommand ToCommandFromResource(CreateHistoricalIncidentRecordResource resource)
     {
-        return new CreateHistoricalIncidentRecordCommand(resource.Sector, resource.IncidentType, resource.Criticality);
+        return new CreateHistoricalIncidentRecordCommand(
+            resource.Sector, resource.IncidentType, resource.Criticality,
+            resource.Description, resource.Resolved, resource.ClosingDate, resource.ResolutionTimeHours, resource.OperatorId);
     }
 }

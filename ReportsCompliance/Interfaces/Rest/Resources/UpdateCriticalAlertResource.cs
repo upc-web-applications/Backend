@@ -6,4 +6,5 @@ public record UpdateCriticalAlertResource(
     string RiskType,
     string Message,
     int ElapsedHours,
-    string Status);
+    string Status,
+    string ResponsibleSupervisor);

@@ -7,6 +7,6 @@ public static class CreateCriticalAlertCommandFromResourceAssembler
 {
     public static CreateCriticalAlertCommand ToCommandFromResource(CreateCriticalAlertResource resource)
     {
-        return new CreateCriticalAlertCommand(resource.Type, resource.Sector, resource.RiskType, resource.Message, resource.ElapsedHours);
+        return new CreateCriticalAlertCommand(resource.Type, resource.Sector, resource.RiskType, resource.Message, resource.ElapsedHours, resource.ResponsibleSupervisor);
     }
 }

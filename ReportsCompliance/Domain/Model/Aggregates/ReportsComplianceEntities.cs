@@ -31,6 +31,11 @@ public class HistoricalIncidentRecord : IAuditableEntity
     public string IncidentType { get; set; } = string.Empty;
     public string Criticality { get; set; } = string.Empty;
     public DateTime IncidentDate { get; set; } = DateTime.UtcNow;
+    public string Description { get; set; } = string.Empty;
+    public bool Resolved { get; set; } = false;
+    public DateTime? ClosingDate { get; set; }
+    public int? ResolutionTimeHours { get; set; }
+    public string? OperatorId { get; set; }
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }
@@ -81,6 +86,10 @@ public class CriticalAlert : IAuditableEntity
     public int ElapsedHours { get; set; }
 
     public string Status { get; set; } = "active";
+
+    [JsonPropertyName("responsible_supervisor")]
+    public string ResponsibleSupervisor { get; set; } = string.Empty;
+
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }
