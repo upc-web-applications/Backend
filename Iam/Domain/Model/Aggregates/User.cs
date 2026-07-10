@@ -18,6 +18,14 @@ public class User : IAuditableEntity
         PasswordHash = passwordHash;
     }
 
+    public User(string username, string passwordHash, string email, string name) : this()
+    {
+        Username = username;
+        PasswordHash = passwordHash;
+        Email = email;
+        Name = name;
+    }
+
     public string Id { get; set; }
     public string Username { get; set; }
     public string Name { get; set; } = string.Empty;
