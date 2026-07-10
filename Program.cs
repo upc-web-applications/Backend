@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using MySqlConnector;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -255,11 +256,21 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Database migration: apply any pending EF migrations (e.g. AddAssetType) on startup
+// Ensure the org_assets.type column exists. The schema is managed by EnsureCreated
+// (seeder fallback); EF Core 9 + MySql.EntityFrameworkCore 9.0.0 has a broken migration
+// lock (emits SQL Server sp_getapplock), so we add the column with native MySQL DDL.
 using (var migrateScope = app.Services.CreateScope())
 {
     var dbContext = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await dbContext.Database.MigrateAsync();
+    try
+    {
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE org_assets ADD COLUMN type longtext NOT NULL DEFAULT 'Machinery';");
+    }
+    catch (MySqlConnector.MySqlException ex) when (ex.Number == 1060)
+    {
+        // Duplicate column: type already exists, which is expected on subsequent starts.
+    }
 }
 
 // Database seeding
