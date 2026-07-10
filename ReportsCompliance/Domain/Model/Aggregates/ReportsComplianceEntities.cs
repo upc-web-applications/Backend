@@ -64,7 +64,7 @@ public class CriticalAlert : IAuditableEntity
     [JsonPropertyName("elapsed_hours")]
     public int ElapsedHours { get; set; }
 
-    public string Status { get; set; } = "active";
+    public string Status { get; set; } = "unresolved";
 
     [JsonPropertyName("responsible_supervisor")]
     public string ResponsibleSupervisor { get; set; } = string.Empty;

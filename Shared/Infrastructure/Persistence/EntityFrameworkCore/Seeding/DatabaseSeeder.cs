@@ -187,8 +187,8 @@ public static class DatabaseSeeder
             if (!await context.HistoricalIncidentRecords.AnyAsync())
             {
                 context.HistoricalIncidentRecords.AddRange(
-                    new HistoricalIncidentRecord { Id = "HIR_001", Sector = "Zona de Forjado", IncidentType = "Condicion insegura", Criticality = "Critico", IncidentDate = DateTime.UtcNow.AddDays(-10), Description = "Acumulacion de material inflamable cerca de fuente de calor", Resolved = true, ClosingDate = DateTime.UtcNow.AddDays(-7), ResolutionTimeHours = 72, OperatorId = operarioUser!.Id },
-                    new HistoricalIncidentRecord { Id = "HIR_002", Sector = "Almacen de Quimicos", IncidentType = "Derrame", Criticality = "Critico", IncidentDate = DateTime.UtcNow.AddDays(-6), Description = "Derrame de solvente organico sin contención", Resolved = false, ClosingDate = null, ResolutionTimeHours = null, OperatorId = operarioUser!.Id },
+                    new HistoricalIncidentRecord { Id = "HIR_001", Sector = "Zona de Forjado", IncidentType = "Condicion insegura", Criticality = "critical", IncidentDate = DateTime.UtcNow.AddDays(-10), Description = "Acumulacion de material inflamable cerca de fuente de calor", Resolved = true, ClosingDate = DateTime.UtcNow.AddDays(-7), ResolutionTimeHours = 72, OperatorId = operarioUser!.Id },
+                    new HistoricalIncidentRecord { Id = "HIR_002", Sector = "Almacen de Quimicos", IncidentType = "Derrame", Criticality = "critical", IncidentDate = DateTime.UtcNow.AddDays(-6), Description = "Derrame de solvente organico sin contención", Resolved = false, ClosingDate = null, ResolutionTimeHours = null, OperatorId = operarioUser!.Id },
                     new HistoricalIncidentRecord { Id = "HIR_003", Sector = "Zona de Soldadura", IncidentType = "Practica insegura", Criticality = "Alto", IncidentDate = DateTime.UtcNow.AddDays(-3), Description = "Soldadura sin pantalla de proteccion en zona comun", Resolved = false, ClosingDate = null, ResolutionTimeHours = null, OperatorId = operarioUser!.Id }
                 );
                 await context.SaveChangesAsync();
@@ -211,7 +211,7 @@ public static class DatabaseSeeder
             // ── ReportsCompliance: CriticalAlerts ──
             if (!await context.CriticalAlerts.AnyAsync())
             {
-                context.CriticalAlerts.Add(new CriticalAlert { Id = "CA_001", Type = "critical", Sector = "Zona de Forjado", RiskType = "Fisico", Message = "Riesgo critico sin resolver en Zona de Forjado", ElapsedHours = 26, Status = "active", ResponsibleSupervisor = "Supervisor RiskGuard" });
+                context.CriticalAlerts.Add(new CriticalAlert { Id = "CA_001", Type = "critical", Sector = "Zona de Forjado", RiskType = "Fisico", Message = "Riesgo critico sin resolver en Zona de Forjado", ElapsedHours = 26, Status = "unresolved", ResponsibleSupervisor = "Supervisor RiskGuard" });
                 await context.SaveChangesAsync();
             }
 

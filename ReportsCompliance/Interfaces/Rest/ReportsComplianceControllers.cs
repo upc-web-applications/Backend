@@ -460,10 +460,10 @@ internal static class OperationalReportsCalculator
 
         return new[]
         {
-            new KpiDashboardResource("active_incidents", "Incidentes activos", active, 0, active == 0 ? "Alerta" : "Critico", now),
-            new KpiDashboardResource("resolved_incidents", "Incidentes resueltos", resolved, ResolvedGoal, resolved >= ResolvedGoal ? "Alerta" : "Critico", now),
-            new KpiDashboardResource("critical_sectors", "Sectores criticos", criticalSectors, 0, criticalSectors == 0 ? "Alerta" : "Critico", now),
-            new KpiDashboardResource("ohs_plan_compliance", "Cumplimiento Plan SST", compliance, OhsGoal, compliance >= OhsGoal ? "Alerta" : "Critico", now)
+            new KpiDashboardResource("active_incidents", "Incidentes activos", active, 0, active == 0 ? "optimal" : "danger", now),
+            new KpiDashboardResource("resolved_incidents", "Incidentes resueltos", resolved, ResolvedGoal, resolved >= ResolvedGoal ? "optimal" : "alert", now),
+            new KpiDashboardResource("critical_sectors", "Sectores criticos", criticalSectors, 0, criticalSectors == 0 ? "optimal" : "danger", now),
+            new KpiDashboardResource("ohs_plan_compliance", "Cumplimiento Plan SST", compliance, OhsGoal, compliance >= OhsGoal ? "optimal" : "danger", now)
         };
     }
 
@@ -566,7 +566,7 @@ internal static class OperationalReportsCalculator
             .Select(group => group.Key)
             .FirstOrDefault() ?? "Sin sector recurrente";
 
-        var trendLabel = slaMissed > 0 || active > 0 ? "Alerta" : "Estable";
+        var trendLabel = slaMissed > 0 || active > 0 ? "alert" : "stable";
         var description = $"{active} tickets correctivos activos, {slaMissed} con SLA incumplido. Sector con mayor recurrencia: {recurringSector}.";
 
         return new[]
@@ -608,7 +608,7 @@ internal static class OperationalReportsCalculator
                     NormalizeText(ticket.RiskType, "Sin tipo"),
                     message,
                     elapsedHours,
-                    "active",
+                    "unresolved",
                     NormalizeText(ticket.TechnicianName, "Sin asignar"),
                     ticket.CreatedDate);
             });
