@@ -22,7 +22,6 @@ namespace Acme.Center.Platform.ReportsCompliance.Interfaces.Rest;
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Historical Incident Records Endpoints")]
 public class HistoricalIncidentRecordsController(
-    IReportsComplianceQueryService queryService,
     AppDbContext context,
     IUnitOfWork unitOfWork) : ControllerBase
 {
@@ -41,10 +40,17 @@ public class HistoricalIncidentRecordsController(
     [SwaggerResponse(404, "The record was not found.")]
     public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        var query = new GetHistoricalIncidentRecordByIdQuery(id);
-        var item = await queryService.Handle(query, cancellationToken);
-        if (item is null) return NotFound();
-        return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(item));
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        var computed = OperationalReportsCalculator.BuildHistoricalIncidentRecords(tickets)
+            .FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
+        if (computed is not null) return Ok(computed);
+
+        var existing = await context.Set<HistoricalIncidentRecord>().AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+        if (existing is not null)
+            return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(existing));
+
+        return NotFound();
     }
 
     [HttpPost]
@@ -191,7 +197,6 @@ public class PredictiveIndicatorsController(
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Critical Alerts Endpoints")]
 public class CriticalAlertsController(
-    IReportsComplianceQueryService queryService,
     AppDbContext context,
     IUnitOfWork unitOfWork) : ControllerBase
 {
@@ -200,40 +205,20 @@ public class CriticalAlertsController(
     [SwaggerResponse(200, "The alerts were found.", typeof(IEnumerable<CriticalAlertResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
+        // Read-only: combine computed alerts (from corrective tickets) with stored alerts.
         var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
-        var candidates = OperationalReportsCalculator.BuildCriticalAlerts(tickets);
+        var computed = OperationalReportsCalculator.BuildCriticalAlerts(tickets).ToList();
 
-        var alerts = await context.Set<CriticalAlert>().ToListAsync(cancellationToken);
-        var alertsById = alerts.ToDictionary(alert => alert.Id);
+        var stored = (await context.Set<CriticalAlert>().AsNoTracking().ToListAsync(cancellationToken))
+            .Select(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity)
+            .ToList();
 
-        foreach (var candidate in candidates)
-        {
-            if (alertsById.TryGetValue(candidate.Id, out var existingAlert))
-            {
-                existingAlert.ElapsedHours = candidate.ElapsedHours;
-                existingAlert.Message = candidate.Message;
-            }
-            else
-            {
-                var newAlert = new CriticalAlert
-                {
-                    Id = candidate.Id,
-                    Type = candidate.Type,
-                    Sector = candidate.Sector,
-                    RiskType = candidate.RiskType,
-                    Message = candidate.Message,
-                    ElapsedHours = candidate.ElapsedHours,
-                    Status = "active",
-                    ResponsibleSupervisor = candidate.ResponsibleSupervisor
-                };
-                await context.Set<CriticalAlert>().AddAsync(newAlert, cancellationToken);
-                alerts.Add(newAlert);
-            }
-        }
+        var merged = new List<CriticalAlertResource>(computed);
+        var ids = new HashSet<string>(computed.Select(c => c.Id), StringComparer.OrdinalIgnoreCase);
+        foreach (var s in stored)
+            if (ids.Add(s.Id)) merged.Add(s);
 
-        await unitOfWork.CompleteAsync(cancellationToken);
-
-        return Ok(alerts.Select(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity));
+        return Ok(merged);
     }
 
     [HttpPost]
@@ -243,7 +228,7 @@ public class CriticalAlertsController(
     {
         var entity = new CriticalAlert
         {
-            Id = resource.Id,
+            Id = string.IsNullOrWhiteSpace(resource.Id) ? Guid.NewGuid().ToString("N") : resource.Id,
             Type = resource.Type,
             Sector = resource.Sector,
             RiskType = resource.RiskType,
@@ -263,10 +248,17 @@ public class CriticalAlertsController(
     [SwaggerResponse(404, "The alert was not found.")]
     public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        var query = new GetCriticalAlertByIdQuery(id);
-        var item = await queryService.Handle(query, cancellationToken);
-        if (item is null) return NotFound();
-        return Ok(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity(item));
+        var stored = await context.Set<CriticalAlert>().AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        if (stored is not null)
+            return Ok(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity(stored));
+
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        var computed = OperationalReportsCalculator.BuildCriticalAlerts(tickets)
+            .FirstOrDefault(a => string.Equals(a.Id, id, StringComparison.OrdinalIgnoreCase));
+        if (computed is not null) return Ok(computed);
+
+        return NotFound();
     }
 
     [HttpPut("{id}")]
