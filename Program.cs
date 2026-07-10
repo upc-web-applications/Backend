@@ -256,20 +256,22 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure the org_assets.type column exists. The schema is managed by EnsureCreated
-// (seeder fallback); EF Core 9 + MySql.EntityFrameworkCore 9.0.0 has a broken migration
-// lock (emits SQL Server sp_getapplock), so we add the column with native MySQL DDL.
+// Ensure the org_assets.type column exists (idempotent, runs on every startup).
+// MySQL doesn't allow DEFAULT on TEXT/BLOB/GEOMETRY/JSON columns, so we use varchar(100).
 using (var migrateScope = app.Services.CreateScope())
 {
     var dbContext = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
-    try
+
+    // Check if column already exists (idempotent guard)
+    var columnExists = await dbContext.Database
+        .SqlQueryRaw<int>(@"SELECT COUNT(*) AS Value FROM information_schema.columns 
+            WHERE table_schema = DATABASE() AND table_name = 'org_assets' AND column_name = 'type'")
+        .FirstAsync();
+
+    if (columnExists == 0)
     {
         await dbContext.Database.ExecuteSqlRawAsync(
-            "ALTER TABLE org_assets ADD COLUMN type longtext NOT NULL DEFAULT 'Machinery';");
-    }
-    catch (MySqlConnector.MySqlException ex) when (ex.Number == 1060)
-    {
-        // Duplicate column: type already exists, which is expected on subsequent starts.
+            "ALTER TABLE org_assets ADD COLUMN type varchar(100) NOT NULL DEFAULT 'Machinery';");
     }
 }
 
