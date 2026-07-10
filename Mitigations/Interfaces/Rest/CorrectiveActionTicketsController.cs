@@ -85,14 +85,22 @@ public class CorrectiveActionTicketsController(
         var existing = await context.Set<CorrectiveActionTicket>().FindAsync([id], ct);
         if (existing is null) return NotFound();
 
-        await context.Set<MeasureVerification>().Where(v => v.TicketId == id).ExecuteDeleteAsync(ct);
-        await context.Set<TicketHistory>().Where(h => h.TicketId == id).ExecuteDeleteAsync(ct);
-        await context.Set<SlaAlert>().Where(a => a.TicketId == id).ExecuteDeleteAsync(ct);
-        await context.Set<CriticalNotification>().Where(n => n.TicketId == id).ExecuteDeleteAsync(ct);
-        await context.Set<Mitigation>().Where(m => m.TicketId == id).ExecuteDeleteAsync(ct);
+        await using var tx = await context.Database.BeginTransactionAsync(ct);
+
+        context.Set<MeasureVerification>().RemoveRange(
+            await context.Set<MeasureVerification>().Where(v => v.TicketId == id).ToListAsync(ct));
+        context.Set<TicketHistory>().RemoveRange(
+            await context.Set<TicketHistory>().Where(h => h.TicketId == id).ToListAsync(ct));
+        context.Set<SlaAlert>().RemoveRange(
+            await context.Set<SlaAlert>().Where(a => a.TicketId == id).ToListAsync(ct));
+        context.Set<CriticalNotification>().RemoveRange(
+            await context.Set<CriticalNotification>().Where(n => n.TicketId == id).ToListAsync(ct));
+        context.Set<Mitigation>().RemoveRange(
+            await context.Set<Mitigation>().Where(m => m.TicketId == id).ToListAsync(ct));
 
         context.Set<CorrectiveActionTicket>().Remove(existing);
-        await unitOfWork.CompleteAsync(ct);
+        await context.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return NoContent();
     }
 }
