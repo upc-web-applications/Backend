@@ -255,6 +255,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// Database migration: apply any pending EF migrations (e.g. AddAssetType) on startup
+using (var migrateScope = app.Services.CreateScope())
+{
+    var dbContext = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 // Database seeding
 if (app.Configuration.GetValue("SeedDatabase", true))
 {
