@@ -120,6 +120,51 @@ public class KpiDashboard : IAuditableEntity
     public DateTimeOffset? UpdatedAt { get; set; }
 }
 
+public class MonthlyReport : IAuditableEntity
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public int Month { get; set; }
+    public int Year { get; set; }
+
+    [JsonPropertyName("total_incidents")]
+    public int TotalIncidents { get; set; }
+
+    [JsonPropertyName("resolved_incidents")]
+    public int ResolvedIncidents { get; set; }
+
+    [JsonPropertyName("compliance_percentage")]
+    public decimal CompliancePercentage { get; set; }
+
+    public string Status { get; set; } = "draft";
+
+    [JsonPropertyName("generated_at")]
+    public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTimeOffset? CreatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
+}
+
+public class CumulativeStIndicator : IAuditableEntity
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+
+    [JsonPropertyName("total_incidents")]
+    public int TotalIncidents { get; set; }
+
+    [JsonPropertyName("resolved_incidents")]
+    public int ResolvedIncidents { get; set; }
+
+    [JsonPropertyName("compliance_rate")]
+    public decimal ComplianceRate { get; set; }
+
+    public string Period { get; set; } = string.Empty;
+
+    public DateTimeOffset? CreatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
+}
+
 public class HistoricalTrend : IAuditableEntity
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");

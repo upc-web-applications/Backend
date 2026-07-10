@@ -14,5 +14,7 @@ public static class ModelBuilderExtensions
         builder.Entity<GeneratedReport>().HasKey(report => report.Id);
         builder.Entity<KpiDashboard>().HasKey(kpi => kpi.Id);
         builder.Entity<HistoricalTrend>().HasKey(trend => trend.Id);
+        builder.Entity<MonthlyReport>().HasKey(report => report.Id);
+        builder.Entity<CumulativeStIndicator>().HasKey(indicator => indicator.Id);
     }
 }

@@ -9,6 +9,7 @@ using Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Resources;
 using Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Transform;
 using Acme.Center.Platform.Shared.Domain.Repositories;
 using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Acme.Center.Platform.Shared.Interfaces.Rest;
 using CorrectiveActionTicket = Acme.Center.Platform.Mitigations.Domain.Model.Aggregates.CorrectiveActionTicket;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -342,6 +343,24 @@ public class HistoricalTrendsController(
         return Ok(HistoricalTrendResourceFromEntityAssembler.ToResourceFromEntity(item));
     }
 }
+
+// ── MonthlyReports: CRUD ──
+
+[ApiController]
+[Route("api/v1/monthly_reports")]
+[Produces(MediaTypeNames.Application.Json)]
+[SwaggerTag("Monthly Reports Endpoints")]
+public class MonthlyReportsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<MonthlyReport>(context, unitOfWork);
+
+// ── Cumulative ST Indicators: CRUD ──
+
+[ApiController]
+[Route("api/v1/cumulative_st_indicators")]
+[Produces(MediaTypeNames.Application.Json)]
+[SwaggerTag("Cumulative ST Indicators Endpoints")]
+public class CumulativeStIndicatorsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<CumulativeStIndicator>(context, unitOfWork);
 
 internal static class OperationalReportsCalculator
 {

@@ -6,5 +6,5 @@ namespace Acme.Center.Platform.Iam.Interfaces.Rest.Transform;
 public static class AuthenticatedUserResourceFromEntityAssembler
 {
     public static AuthenticatedUserResource ToResourceFromEntity(User user, string token)
-        => new(user.Id, user.Username, token);
+        => new(user.Id, user.Username, user.Email, user.Name, user.Role, token);
 }
