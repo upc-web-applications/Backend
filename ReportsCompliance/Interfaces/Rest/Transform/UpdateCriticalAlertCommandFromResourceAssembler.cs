@@ -15,7 +15,8 @@ public static class UpdateCriticalAlertCommandFromResourceAssembler
             RiskType = resource.RiskType,
             Message = resource.Message,
             ElapsedHours = resource.ElapsedHours,
-            Status = resource.Status
+            Status = resource.Status,
+            ResponsibleSupervisor = resource.ResponsibleSupervisor
         };
     }
 }

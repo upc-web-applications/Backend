@@ -6,5 +6,5 @@ namespace Acme.Center.Platform.Iam.Interfaces.Rest.Transform;
 public static class SignInCommandFromResourceAssembler
 {
     public static SignInCommand ToCommandFromResource(SignInResource resource)
-        => new(resource.Username, resource.Password);
+        => new(resource.Email, resource.Password);
 }

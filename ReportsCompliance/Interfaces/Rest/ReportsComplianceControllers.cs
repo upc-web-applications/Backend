@@ -9,138 +9,29 @@ using Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Resources;
 using Acme.Center.Platform.ReportsCompliance.Interfaces.Rest.Transform;
 using Acme.Center.Platform.Shared.Domain.Repositories;
 using Acme.Center.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Acme.Center.Platform.Shared.Interfaces.Rest;
+using CorrectiveActionTicket = Acme.Center.Platform.Mitigations.Domain.Model.Aggregates.CorrectiveActionTicket;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Acme.Center.Platform.ReportsCompliance.Interfaces.Rest;
 
-// ── MonthlyReports: GET all, GET id, GET year, POST, PUT ──
-
-[ApiController]
-[Route("api/v1/monthly_reports")]
-[Produces(MediaTypeNames.Application.Json)]
-[SwaggerTag("Monthly Reports Endpoints")]
-public class MonthlyReportsController(
-    IReportsComplianceCommandService commandService,
-    IReportsComplianceQueryService queryService,
-    AppDbContext context,
-    IUnitOfWork unitOfWork) : ControllerBase
-{
-    [HttpGet]
-    [SwaggerOperation("Get all monthly reports")]
-    [SwaggerResponse(200, "The monthly reports were found.", typeof(IEnumerable<MonthlyReportResource>))]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-    {
-        var query = new GetAllMonthlyReportsQuery();
-        var reports = await queryService.Handle(query, cancellationToken);
-        var resources = reports.Select(MonthlyReportResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
-    }
-
-    [HttpGet("{id}")]
-    [SwaggerOperation("Get monthly report by id")]
-    [SwaggerResponse(200, "The monthly report was found.", typeof(MonthlyReportResource))]
-    [SwaggerResponse(404, "The monthly report was not found.")]
-    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
-    {
-        var query = new GetMonthlyReportByIdQuery(id);
-        var report = await queryService.Handle(query, cancellationToken);
-        if (report is null) return NotFound();
-        return Ok(MonthlyReportResourceFromEntityAssembler.ToResourceFromEntity(report));
-    }
-
-    [HttpGet("year/{year:int}")]
-    [SwaggerOperation("Get monthly reports by year")]
-    [SwaggerResponse(200, "The monthly reports were found.", typeof(IEnumerable<MonthlyReportResource>))]
-    public async Task<IActionResult> GetByYear(int year, CancellationToken cancellationToken)
-    {
-        var query = new GetMonthlyReportsByYearQuery(year);
-        var reports = await queryService.Handle(query, cancellationToken);
-        var resources = reports.Select(MonthlyReportResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
-    }
-
-    [HttpPost]
-    [SwaggerOperation("Create monthly report")]
-    [SwaggerResponse(201, "The monthly report was created.", typeof(MonthlyReportResource))]
-    [SwaggerResponse(400, "The monthly report was not created.")]
-    public async Task<IActionResult> Create([FromBody] CreateMonthlyReportResource resource, CancellationToken cancellationToken)
-    {
-        var command = CreateMonthlyReportCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await commandService.Handle(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-        var created = MonthlyReportResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-    }
-
-    [HttpPut("{id}")]
-    [SwaggerOperation("Update monthly report")]
-    [SwaggerResponse(200, "The monthly report was updated.", typeof(MonthlyReportResource))]
-    [SwaggerResponse(404, "The monthly report was not found.")]
-    public async Task<IActionResult> Update(string id, [FromBody] UpdateMonthlyReportResource resource, CancellationToken cancellationToken)
-    {
-        var existing = await context.Set<MonthlyReport>().FindAsync([id], cancellationToken);
-        if (existing is null) return NotFound();
-        var entity = UpdateMonthlyReportCommandFromResourceAssembler.ToEntityFromResource(id, resource);
-        context.Entry(existing).CurrentValues.SetValues(entity);
-        await unitOfWork.CompleteAsync(cancellationToken);
-        return Ok(MonthlyReportResourceFromEntityAssembler.ToResourceFromEntity(existing));
-    }
-}
-
-// ── CumulativeStIndicators: GET all, GET id ──
-
-[ApiController]
-[Route("api/v1/cumulative_st_indicators")]
-[Produces(MediaTypeNames.Application.Json)]
-[SwaggerTag("Cumulative ST Indicators Endpoints")]
-public class CumulativeStIndicatorsController(
-    IReportsComplianceQueryService queryService) : ControllerBase
-{
-    [HttpGet]
-    [SwaggerOperation("Get all cumulative ST indicators")]
-    [SwaggerResponse(200, "The indicators were found.", typeof(IEnumerable<CumulativeStIndicatorResource>))]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-    {
-        var query = new GetAllCumulativeStIndicatorsQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(CumulativeStIndicatorResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
-    }
-
-    [HttpGet("{id}")]
-    [SwaggerOperation("Get cumulative ST indicator by id")]
-    [SwaggerResponse(200, "The indicator was found.", typeof(CumulativeStIndicatorResource))]
-    [SwaggerResponse(404, "The indicator was not found.")]
-    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
-    {
-        var query = new GetCumulativeStIndicatorByIdQuery(id);
-        var item = await queryService.Handle(query, cancellationToken);
-        if (item is null) return NotFound();
-        return Ok(CumulativeStIndicatorResourceFromEntityAssembler.ToResourceFromEntity(item));
-    }
-}
-
-// ── HistoricalIncidentRecords: GET all, GET id, POST, PUT ──
+// ── HistoricalIncidentRecords: GET all, GET id (calculado en vivo desde tickets, solo lectura) ──
 
 [ApiController]
 [Route("api/v1/historical_incident_records")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Historical Incident Records Endpoints")]
 public class HistoricalIncidentRecordsController(
-    IReportsComplianceCommandService commandService,
     IReportsComplianceQueryService queryService,
-    AppDbContext context,
-    IUnitOfWork unitOfWork) : ControllerBase
+    AppDbContext context) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all historical incident records")]
     [SwaggerResponse(200, "The records were found.", typeof(IEnumerable<HistoricalIncidentRecordResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllHistoricalIncidentRecordsQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildHistoricalIncidentRecords(tickets));
     }
 
     [HttpGet("{id}")]
@@ -153,33 +44,6 @@ public class HistoricalIncidentRecordsController(
         var item = await queryService.Handle(query, cancellationToken);
         if (item is null) return NotFound();
         return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(item));
-    }
-
-    [HttpPost]
-    [SwaggerOperation("Create historical incident record")]
-    [SwaggerResponse(201, "The record was created.", typeof(HistoricalIncidentRecordResource))]
-    [SwaggerResponse(400, "The record was not created.")]
-    public async Task<IActionResult> Create([FromBody] CreateHistoricalIncidentRecordResource resource, CancellationToken cancellationToken)
-    {
-        var command = CreateHistoricalIncidentRecordCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await commandService.Handle(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-        var created = HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-    }
-
-    [HttpPut("{id}")]
-    [SwaggerOperation("Update historical incident record")]
-    [SwaggerResponse(200, "The record was updated.", typeof(HistoricalIncidentRecordResource))]
-    [SwaggerResponse(404, "The record was not found.")]
-    public async Task<IActionResult> Update(string id, [FromBody] UpdateHistoricalIncidentRecordResource resource, CancellationToken cancellationToken)
-    {
-        var existing = await context.Set<HistoricalIncidentRecord>().FindAsync([id], cancellationToken);
-        if (existing is null) return NotFound();
-        var entity = UpdateHistoricalIncidentRecordCommandFromResourceAssembler.ToEntityFromResource(id, resource);
-        context.Entry(existing).CurrentValues.SetValues(entity);
-        await unitOfWork.CompleteAsync(cancellationToken);
-        return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(existing));
     }
 }
 
@@ -199,10 +63,8 @@ public class AnnualOhsPlanController(
     [SwaggerResponse(200, "The plans were found.", typeof(IEnumerable<AnnualOhsPlanResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllAnnualOhsPlansQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(AnnualOhsPlanResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildAnnualOhsPlan(tickets));
     }
 
     [HttpGet("{id}")]
@@ -239,17 +101,16 @@ public class AnnualOhsPlanController(
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Predictive Indicators Endpoints")]
 public class PredictiveIndicatorsController(
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all predictive indicators")]
     [SwaggerResponse(200, "The indicators were found.", typeof(IEnumerable<PredictiveIndicatorResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllPredictiveIndicatorsQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(PredictiveIndicatorResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildPredictiveIndicators(tickets));
     }
 
     [HttpGet("{id}")]
@@ -281,10 +142,40 @@ public class CriticalAlertsController(
     [SwaggerResponse(200, "The alerts were found.", typeof(IEnumerable<CriticalAlertResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllCriticalAlertsQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        var candidates = OperationalReportsCalculator.BuildCriticalAlerts(tickets);
+
+        var alerts = await context.Set<CriticalAlert>().ToListAsync(cancellationToken);
+        var alertsById = alerts.ToDictionary(alert => alert.Id);
+
+        foreach (var candidate in candidates)
+        {
+            if (alertsById.TryGetValue(candidate.Id, out var existingAlert))
+            {
+                existingAlert.ElapsedHours = candidate.ElapsedHours;
+                existingAlert.Message = candidate.Message;
+            }
+            else
+            {
+                var newAlert = new CriticalAlert
+                {
+                    Id = candidate.Id,
+                    Type = candidate.Type,
+                    Sector = candidate.Sector,
+                    RiskType = candidate.RiskType,
+                    Message = candidate.Message,
+                    ElapsedHours = candidate.ElapsedHours,
+                    Status = "active",
+                    ResponsibleSupervisor = candidate.ResponsibleSupervisor
+                };
+                await context.Set<CriticalAlert>().AddAsync(newAlert, cancellationToken);
+                alerts.Add(newAlert);
+            }
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return Ok(alerts.Select(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity));
     }
 
     [HttpGet("{id}")]
@@ -396,17 +287,16 @@ public class GeneratedReportsController(
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("KPI Dashboard Endpoints")]
 public class KpiDashboardController(
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all KPI dashboard entries")]
     [SwaggerResponse(200, "The KPI entries were found.", typeof(IEnumerable<KpiDashboardResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllKpiDashboardQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(KpiDashboardResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildKpiDashboard(tickets));
     }
 
     [HttpGet("{id}")]
@@ -429,17 +319,16 @@ public class KpiDashboardController(
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Historical Trends Endpoints")]
 public class HistoricalTrendsController(
-    IReportsComplianceQueryService queryService) : ControllerBase
+    IReportsComplianceQueryService queryService,
+    AppDbContext context) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all historical trends")]
     [SwaggerResponse(200, "The trends were found.", typeof(IEnumerable<HistoricalTrendResource>))]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var query = new GetAllHistoricalTrendsQuery();
-        var items = await queryService.Handle(query, cancellationToken);
-        var resources = items.Select(HistoricalTrendResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        var tickets = await OperationalReportsCalculator.LoadCorrectiveTicketsAsync(context, cancellationToken);
+        return Ok(OperationalReportsCalculator.BuildHistoricalTrends(tickets));
     }
 
     [HttpGet("{id}")]
@@ -452,5 +341,276 @@ public class HistoricalTrendsController(
         var item = await queryService.Handle(query, cancellationToken);
         if (item is null) return NotFound();
         return Ok(HistoricalTrendResourceFromEntityAssembler.ToResourceFromEntity(item));
+    }
+}
+
+// ── MonthlyReports: CRUD ──
+
+[ApiController]
+[Route("api/v1/monthly_reports")]
+[Produces(MediaTypeNames.Application.Json)]
+[SwaggerTag("Monthly Reports Endpoints")]
+public class MonthlyReportsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<MonthlyReport>(context, unitOfWork);
+
+// ── Cumulative ST Indicators: CRUD ──
+
+[ApiController]
+[Route("api/v1/cumulative_st_indicators")]
+[Produces(MediaTypeNames.Application.Json)]
+[SwaggerTag("Cumulative ST Indicators Endpoints")]
+public class CumulativeStIndicatorsController(AppDbContext context, IUnitOfWork unitOfWork)
+    : CrudController<CumulativeStIndicator>(context, unitOfWork);
+
+internal static class OperationalReportsCalculator
+{
+    private const decimal OhsGoal = 80m;
+    private const decimal ResolvedGoal = 10m;
+
+    public static async Task<List<CorrectiveActionTicket>> LoadCorrectiveTicketsAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        return await context.Set<CorrectiveActionTicket>()
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
+    public static IEnumerable<KpiDashboardResource> BuildKpiDashboard(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        var total = tickets.Count;
+        var resolved = tickets.Count(IsClosed);
+        var active = total - resolved;
+        var criticalSectors = tickets
+            .Where(ticket => !IsClosed(ticket) && (IsCritical(ticket) || ticket.SlaMissed))
+            .Select(ticket => NormalizeText(ticket.Sector, "Sin sector"))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+        var compliance = CalculatePercentage(resolved, total);
+        var now = DateTime.UtcNow;
+
+        return new[]
+        {
+            new KpiDashboardResource("active_incidents", "Incidentes activos", active, 0, active == 0 ? "Alerta" : "Critico", now),
+            new KpiDashboardResource("resolved_incidents", "Incidentes resueltos", resolved, ResolvedGoal, resolved >= ResolvedGoal ? "Alerta" : "Critico", now),
+            new KpiDashboardResource("critical_sectors", "Sectores criticos", criticalSectors, 0, criticalSectors == 0 ? "Alerta" : "Critico", now),
+            new KpiDashboardResource("ohs_plan_compliance", "Cumplimiento Plan SST", compliance, OhsGoal, compliance >= OhsGoal ? "Alerta" : "Critico", now)
+        };
+    }
+
+    public static IEnumerable<AnnualOhsPlanResource> BuildAnnualOhsPlan(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        var year = DateTime.UtcNow.Year;
+        var annualTickets = tickets.Where(ticket => ticket.CreatedDate.Year == year).ToList();
+        var total = annualTickets.Count;
+        var completed = annualTickets.Count(IsClosed);
+
+        var monthlyDetails = annualTickets
+            .GroupBy(ticket => ticket.CreatedDate.Month)
+            .OrderBy(group => group.Key)
+            .Select(group =>
+            {
+                var planned = group.Count();
+                var done = group.Count(IsClosed);
+                var compliance = (int)CalculatePercentage(done, planned);
+                var status = compliance >= 80 ? "optimal" : compliance >= 50 ? "acceptable" : "critical";
+                return new MonthlyOhsDetailResource(group.Key, done, planned, compliance, status);
+            })
+            .ToList();
+
+        var detailsBySector = annualTickets
+            .Where(ticket => !string.IsNullOrWhiteSpace(ticket.Sector))
+            .GroupBy(ticket => ticket.Sector.Trim(), StringComparer.OrdinalIgnoreCase)
+            .OrderBy(group => group.Key)
+            .Select(group =>
+            {
+                var planned = group.Count();
+                var done = group.Count(IsClosed);
+                return new SectorOhsDetailResource(group.Key, done, planned, (int)CalculatePercentage(done, planned));
+            })
+            .ToList();
+
+        var criticalMonths = monthlyDetails.Count(month => month.Compliance < 50);
+
+        return new[]
+        {
+            new AnnualOhsPlanResource(
+                $"ohs-{year}", year, CalculatePercentage(completed, total), OhsGoal, completed, total,
+                criticalMonths, DateTime.UtcNow, monthlyDetails, detailsBySector, null)
+        };
+    }
+
+    public static IEnumerable<PredictiveIndicatorResource> BuildPredictiveIndicators(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        var now = DateTime.UtcNow;
+
+        int ElapsedHours(CorrectiveActionTicket ticket) =>
+            Math.Max(0, (int)Math.Round(((ticket.ClosureDate ?? now) - ticket.CreatedDate).TotalHours));
+
+        var activeTickets = tickets.Where(ticket => !IsClosed(ticket)).ToList();
+        var resolvedTickets = tickets.Where(IsClosed).ToList();
+
+        var sectorsWithTrend = activeTickets
+            .GroupBy(ticket => NormalizeText(ticket.Sector, "Sin sector"), StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var events = group.Count();
+                var maxElapsed = group.Max(ElapsedHours);
+                var variation = Math.Max(10, Math.Min(99, events * 15 + (int)Math.Round(maxElapsed / 8.0)));
+                var status = maxElapsed >= 48 || events >= 3 ? "critical" : "alert";
+                return new SectorTrendResource(group.Key, events, variation, status);
+            })
+            .ToList();
+
+        var recurringTypes = tickets
+            .GroupBy(ticket => NormalizeText(ticket.RiskType, "Sin tipo"), StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var count = group.Count();
+                var percentage = tickets.Count > 0 ? (int)Math.Round((decimal)count / tickets.Count * 100) : 0;
+                var trend = count >= 2 ? "increasing" : "stable";
+                return new RecurringIncidentTypeResource(group.Key, count, percentage, trend);
+            })
+            .ToList();
+
+        var avgResolution = resolvedTickets.Count > 0
+            ? (int)Math.Round(resolvedTickets.Average(ElapsedHours))
+            : activeTickets.Count > 0
+                ? (int)Math.Round(activeTickets.Average(ElapsedHours))
+                : 0;
+
+        var active = activeTickets.Count;
+        var slaMissed = tickets.Count(ticket => ticket.SlaMissed);
+        var recurringSector = tickets
+            .Where(ticket => !string.IsNullOrWhiteSpace(ticket.Sector))
+            .GroupBy(ticket => ticket.Sector.Trim(), StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(group => group.Count())
+            .Select(group => group.Key)
+            .FirstOrDefault() ?? "Sin sector recurrente";
+
+        var trendLabel = slaMissed > 0 || active > 0 ? "Alerta" : "Estable";
+        var description = $"{active} tickets correctivos activos, {slaMissed} con SLA incumplido. Sector con mayor recurrencia: {recurringSector}.";
+
+        return new[]
+        {
+            new PredictiveIndicatorResource(
+                "LIVE_CORRECTIVE_FLOW",
+                "Riesgo operativo actual",
+                description,
+                active,
+                trendLabel,
+                now,
+                30,
+                tickets.Count,
+                Math.Max(0, active * 10),
+                avgResolution,
+                24,
+                sectorsWithTrend,
+                recurringTypes,
+                Array.Empty<object>())
+        };
+    }
+
+    public static IEnumerable<CriticalAlertResource> BuildCriticalAlerts(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        return tickets
+            .Where(ticket => !IsClosed(ticket) && (IsCritical(ticket) || ticket.SlaMissed))
+            .Select(ticket =>
+            {
+                var elapsedHours = Math.Max(0, (int)Math.Floor((DateTime.UtcNow - ticket.CreatedDate).TotalHours));
+                var type = ticket.SlaMissed ? "SLA" : "CRITICAL";
+                var message = ticket.SlaMissed
+                    ? $"Ticket correctivo #{ticket.TicketNumber} con SLA incumplido requiere decision administrativa."
+                    : $"Ticket correctivo #{ticket.TicketNumber} critico requiere decision administrativa.";
+
+                return new CriticalAlertResource(
+                    $"OP-COR-{ticket.TicketNumber}",
+                    type,
+                    NormalizeText(ticket.Sector, "Sin sector"),
+                    NormalizeText(ticket.RiskType, "Sin tipo"),
+                    message,
+                    elapsedHours,
+                    "active",
+                    NormalizeText(ticket.TechnicianName, "Sin asignar"),
+                    ticket.CreatedDate);
+            });
+    }
+
+    public static IEnumerable<HistoricalIncidentRecordResource> BuildHistoricalIncidentRecords(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        return tickets.Select(ticket =>
+        {
+            var closed = IsClosed(ticket);
+            int? resolutionHours = closed && ticket.ClosureDate.HasValue
+                ? Math.Max(0, (int)Math.Round((ticket.ClosureDate.Value - ticket.CreatedDate).TotalHours))
+                : null;
+
+            return new HistoricalIncidentRecordResource(
+                $"INC-COR-{ticket.TicketNumber}",
+                NormalizeText(ticket.Sector, "Sin sector"),
+                NormalizeText(ticket.RiskType, "Sin tipo"),
+                NormalizeCriticality(ticket.CriticalityLevel),
+                ticket.CreatedDate,
+                string.IsNullOrWhiteSpace(ticket.Instructions) ? $"Ticket correctivo #{ticket.TicketNumber} requiere seguimiento." : ticket.Instructions,
+                closed,
+                closed ? ticket.ClosureDate : null,
+                resolutionHours,
+                string.IsNullOrWhiteSpace(ticket.AssignedTechnicianId) ? null : $"OP_{ticket.AssignedTechnicianId}");
+        });
+    }
+
+    private static string NormalizeCriticality(string value)
+    {
+        var normalized = value.Trim().ToLowerInvariant();
+        if (normalized.Contains("critico") || normalized.Contains("crítico") || normalized.Contains("critical")) return "CRITICAL";
+        if (normalized.Contains("importante") || normalized.Contains("alto")) return "HIGH";
+        if (normalized.Contains("moderado") || normalized.Contains("medio")) return "MEDIUM";
+        return "LOW";
+    }
+
+    public static IEnumerable<HistoricalTrendResource> BuildHistoricalTrends(IReadOnlyCollection<CorrectiveActionTicket> tickets)
+    {
+        return tickets
+            .GroupBy(ticket => new { ticket.CreatedDate.Month, ticket.CreatedDate.Year })
+            .OrderBy(group => group.Key.Year)
+            .ThenBy(group => group.Key.Month)
+            .Select(group =>
+            {
+                var incidentsByType = group
+                    .GroupBy(ticket => NormalizeText(ticket.RiskType, "Sin tipo"), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.Count());
+                var incidentsBySector = group
+                    .GroupBy(ticket => NormalizeText(ticket.Sector, "Sin sector"), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                return new HistoricalTrendResource(
+                    $"TREND_{group.Key.Year}_{group.Key.Month:00}",
+                    group.Key.Month,
+                    group.Key.Year,
+                    group.Count(),
+                    incidentsByType,
+                    incidentsBySector);
+            });
+    }
+
+    private static bool IsClosed(CorrectiveActionTicket ticket)
+    {
+        return ticket.Status.Contains("cerrado", StringComparison.OrdinalIgnoreCase)
+               || ticket.Status.Contains("closed", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsCritical(CorrectiveActionTicket ticket)
+    {
+        return ticket.CriticalityLevel.Contains("critico", StringComparison.OrdinalIgnoreCase)
+               || ticket.CriticalityLevel.Contains("crítico", StringComparison.OrdinalIgnoreCase)
+               || ticket.CriticalityLevel.Contains("critical", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static decimal CalculatePercentage(int partial, int total)
+    {
+        return total == 0 ? 0 : Math.Round((decimal)partial / total * 100, 0);
+    }
+
+    private static string NormalizeText(string value, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
     }
 }

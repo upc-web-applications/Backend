@@ -5,35 +5,9 @@ using Acme.Center.Platform.ReportsCompliance.Domain.Repositories;
 
 namespace Acme.Center.Platform.ReportsCompliance.Application.Internal.QueryServices;
 
-public class ReportsComplianceQueryService(IMonthlyReportRepository monthlyReportRepository,
-    IBaseReportsRepository baseReportsRepository)
+public class ReportsComplianceQueryService(IBaseReportsRepository baseReportsRepository)
     : IReportsComplianceQueryService
 {
-    public async Task<IEnumerable<MonthlyReport>> Handle(GetAllMonthlyReportsQuery query, CancellationToken cancellationToken)
-    {
-        return await monthlyReportRepository.ListAsync(cancellationToken);
-    }
-
-    public async Task<MonthlyReport?> Handle(GetMonthlyReportByIdQuery query, CancellationToken cancellationToken)
-    {
-        return await monthlyReportRepository.FindByIdAsync(query.ReportId, cancellationToken);
-    }
-
-    public async Task<IEnumerable<MonthlyReport>> Handle(GetMonthlyReportsByYearQuery query, CancellationToken cancellationToken)
-    {
-        return await monthlyReportRepository.ListByYearAsync(query.Year, cancellationToken);
-    }
-
-    public async Task<IEnumerable<CumulativeStIndicator>> Handle(GetAllCumulativeStIndicatorsQuery query, CancellationToken cancellationToken)
-    {
-        return await baseReportsRepository.GetAllCumulativeStIndicatorsAsync(cancellationToken);
-    }
-
-    public async Task<CumulativeStIndicator?> Handle(GetCumulativeStIndicatorByIdQuery query, CancellationToken cancellationToken)
-    {
-        return await baseReportsRepository.FindCumulativeStIndicatorByIdAsync(query.Id, cancellationToken);
-    }
-
     public async Task<IEnumerable<HistoricalIncidentRecord>> Handle(GetAllHistoricalIncidentRecordsQuery query, CancellationToken cancellationToken)
     {
         return await baseReportsRepository.GetAllHistoricalIncidentRecordsAsync(cancellationToken);

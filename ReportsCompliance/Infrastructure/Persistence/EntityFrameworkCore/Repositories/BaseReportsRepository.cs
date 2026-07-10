@@ -7,16 +7,6 @@ namespace Acme.Center.Platform.ReportsCompliance.Infrastructure.Persistence.Enti
 
 public class BaseReportsRepository(AppDbContext context) : IBaseReportsRepository
 {
-    public async Task<IEnumerable<CumulativeStIndicator>> GetAllCumulativeStIndicatorsAsync(CancellationToken cancellationToken = default)
-    {
-        return await context.CumulativeStIndicators.AsNoTracking().ToListAsync(cancellationToken);
-    }
-
-    public async Task<CumulativeStIndicator?> FindCumulativeStIndicatorByIdAsync(string id, CancellationToken cancellationToken = default)
-    {
-        return await context.CumulativeStIndicators.FindAsync([id], cancellationToken);
-    }
-
     public async Task<IEnumerable<HistoricalIncidentRecord>> GetAllHistoricalIncidentRecordsAsync(CancellationToken cancellationToken = default)
     {
         return await context.HistoricalIncidentRecords.AsNoTracking().ToListAsync(cancellationToken);

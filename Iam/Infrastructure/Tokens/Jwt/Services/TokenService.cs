@@ -20,7 +20,9 @@ public class TokenService(IOptions<TokenSettings> tokenSettings) : ITokenService
         var claims = new[]
         {
             new Claim(ClaimTypes.Sid, user.Id),
-            new Claim(ClaimTypes.Name, user.Username)
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role)
         };
         var token = new JwtSecurityToken(
             claims: claims,

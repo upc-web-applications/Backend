@@ -156,7 +156,6 @@ builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<ProblemDetailsFactory>();
 
 // ReportsCompliance DI
-builder.Services.AddScoped<IMonthlyReportRepository, MonthlyReportRepository>();
 builder.Services.AddScoped<IBaseReportsRepository, BaseReportsRepository>();
 builder.Services.AddScoped<IReportsComplianceCommandService, ReportsComplianceCommandService>();
 builder.Services.AddScoped<IReportsComplianceQueryService, ReportsComplianceQueryService>();

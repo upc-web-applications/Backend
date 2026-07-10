@@ -4,8 +4,6 @@ namespace Acme.Center.Platform.ReportsCompliance.Domain.Repositories;
 
 public interface IBaseReportsRepository
 {
-    Task<IEnumerable<CumulativeStIndicator>> GetAllCumulativeStIndicatorsAsync(CancellationToken cancellationToken = default);
-    Task<CumulativeStIndicator?> FindCumulativeStIndicatorByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<IEnumerable<HistoricalIncidentRecord>> GetAllHistoricalIncidentRecordsAsync(CancellationToken cancellationToken = default);
     Task<HistoricalIncidentRecord?> FindHistoricalIncidentRecordByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<IEnumerable<AnnualOhsPlan>> GetAllAnnualOhsPlansAsync(CancellationToken cancellationToken = default);

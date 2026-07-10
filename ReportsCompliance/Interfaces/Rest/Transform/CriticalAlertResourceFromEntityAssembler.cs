@@ -7,6 +7,8 @@ public static class CriticalAlertResourceFromEntityAssembler
 {
     public static CriticalAlertResource ToResourceFromEntity(CriticalAlert entity)
     {
-        return new CriticalAlertResource(entity.Id, entity.Type, entity.Sector, entity.RiskType, entity.Message, entity.ElapsedHours, entity.Status);
+        return new CriticalAlertResource(
+            entity.Id, entity.Type, entity.Sector, entity.RiskType, entity.Message, entity.ElapsedHours,
+            entity.Status, entity.ResponsibleSupervisor, entity.CreatedAt?.UtcDateTime ?? DateTime.UtcNow);
     }
 }

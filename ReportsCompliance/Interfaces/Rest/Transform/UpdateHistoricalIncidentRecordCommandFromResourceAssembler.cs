@@ -13,7 +13,12 @@ public static class UpdateHistoricalIncidentRecordCommandFromResourceAssembler
             Sector = resource.Sector,
             IncidentType = resource.IncidentType,
             Criticality = resource.Criticality,
-            IncidentDate = resource.IncidentDate
+            IncidentDate = resource.IncidentDate,
+            Description = resource.Description,
+            Resolved = resource.Resolved,
+            ClosingDate = resource.ClosingDate,
+            ResolutionTimeHours = resource.ResolutionTimeHours,
+            OperatorId = resource.OperatorId
         };
     }
 }
