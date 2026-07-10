@@ -334,6 +334,27 @@ public static class DatabaseSeeder
                 await context.SaveChangesAsync();
             }
 
+            // Enrichment: ensure a healthy number of corrective tickets across months/sectors
+            // so dashboards, trends and the SST plan have meaningful data.
+            if (await context.CorrectiveActionTickets.CountAsync() < 9)
+            {
+                var extraTickets = new[]
+                {
+                    new CorrectiveActionTicket { Id = "TKT_004", TicketNumber = 1004, ReportId = "RA_001", SectorId = "SECTOR_01", Sector = "Zona de Forjado", RiskType = "Fisico", CriticalityLevel = "High", Status = "Closed", ClosureDate = DateTime.UtcNow.AddMonths(-2).AddDays(3), Instructions = "Reforzar barreras acusticas en forjado", AssignedTechnicianId = "TEC_001", TechnicianName = "Carlos Mendoza Lopez", CreatedDate = DateTime.UtcNow.AddMonths(-2), SlaLimitHours = 48, SlaMissed = false },
+                    new CorrectiveActionTicket { Id = "TKT_005", TicketNumber = 1005, ReportId = "RA_002", SectorId = "SECTOR_02", Sector = "Almacen de Quimicos", RiskType = "Quimico", CriticalityLevel = "Critical", Status = "Closed", ClosureDate = DateTime.UtcNow.AddMonths(-2).AddDays(2), Instructions = "Ducha de emergencia instalada", AssignedTechnicianId = "TEC_002", TechnicianName = "Maria Garcia Torres", CreatedDate = DateTime.UtcNow.AddMonths(-2).AddDays(-1), SlaLimitHours = 24, SlaMissed = true },
+                    new CorrectiveActionTicket { Id = "TKT_006", TicketNumber = 1006, ReportId = "RA_003", SectorId = "SECTOR_03", Sector = "Linea de Ensamblaje", RiskType = "Ergonomico", CriticalityLevel = "Medium", Status = "Closed", ClosureDate = DateTime.UtcNow.AddMonths(-1).AddDays(4), Instructions = "Pausas activas implementadas", AssignedTechnicianId = "TEC_004", TechnicianName = "Lucia Fernandez Diaz", CreatedDate = DateTime.UtcNow.AddMonths(-1), SlaLimitHours = 72, SlaMissed = false },
+                    new CorrectiveActionTicket { Id = "TKT_007", TicketNumber = 1007, ReportId = "RA_001", SectorId = "SECTOR_01", Sector = "Zona de Forjado", RiskType = "Fisico", CriticalityLevel = "High", Status = "InProgress", Instructions = "Reemplazar aislamiento de maquina", AssignedTechnicianId = "TEC_001", TechnicianName = "Carlos Mendoza Lopez", CreatedDate = DateTime.UtcNow.AddDays(-20), SlaLimitHours = 48, SlaMissed = false },
+                    new CorrectiveActionTicket { Id = "TKT_008", TicketNumber = 1008, ReportId = "RA_002", SectorId = "SECTOR_04", Sector = "Zona de Soldadura", RiskType = "Fisico", CriticalityLevel = "High", Status = "Open", Instructions = "Pantallas de soldadura en zona comun", AssignedTechnicianId = "TEC_003", TechnicianName = "Juan Perez Ramirez", CreatedDate = DateTime.UtcNow.AddDays(-15), SlaLimitHours = 48, SlaMissed = false },
+                    new CorrectiveActionTicket { Id = "TKT_009", TicketNumber = 1009, ReportId = "RA_003", SectorId = "SECTOR_03", Sector = "Linea de Ensamblaje", RiskType = "Ergonomico", CriticalityLevel = "Medium", Status = "Open", Instructions = "Rediseno de estacion de trabajo", AssignedTechnicianId = "TEC_004", TechnicianName = "Lucia Fernandez Diaz", CreatedDate = DateTime.UtcNow.AddDays(-10), SlaLimitHours = 72, SlaMissed = false }
+                };
+                foreach (var t in extraTickets)
+                {
+                    if (await context.CorrectiveActionTickets.FindAsync(t.Id) == null)
+                        context.CorrectiveActionTickets.Add(t);
+                }
+                await context.SaveChangesAsync();
+            }
+
             if (!await context.MeasureVerifications.AnyAsync())
             {
                 context.MeasureVerifications.Add(new MeasureVerification { Id = "VER_001", TicketId = "TKT_001", SupervisorName = "Supervisor RiskGuard", Verdict = "Eficaz", JustificationComment = "Medidas implementadas correctamente", VerificationDate = DateTime.UtcNow });
