@@ -1,7 +1,9 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Acme.Center.Platform.Mitigations.Application.CommandServices;
 using Acme.Center.Platform.Mitigations.Application.QueryServices;
+using Acme.Center.Platform.Mitigations.Domain.Model.Aggregates;
 using Acme.Center.Platform.Mitigations.Domain.Model.Queries;
 using Acme.Center.Platform.Mitigations.Interfaces.Rest.Resources;
 using Acme.Center.Platform.Mitigations.Interfaces.Rest.Transform;
@@ -80,9 +82,16 @@ public class CorrectiveActionTicketsController(
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id, CancellationToken ct)
     {
-        var existing = await context.Set<Domain.Model.Aggregates.CorrectiveActionTicket>().FindAsync([id], ct);
+        var existing = await context.Set<CorrectiveActionTicket>().FindAsync([id], ct);
         if (existing is null) return NotFound();
-        context.Set<Domain.Model.Aggregates.CorrectiveActionTicket>().Remove(existing);
+
+        await context.Set<MeasureVerification>().Where(v => v.TicketId == id).ExecuteDeleteAsync(ct);
+        await context.Set<TicketHistory>().Where(h => h.TicketId == id).ExecuteDeleteAsync(ct);
+        await context.Set<SlaAlert>().Where(a => a.TicketId == id).ExecuteDeleteAsync(ct);
+        await context.Set<CriticalNotification>().Where(n => n.TicketId == id).ExecuteDeleteAsync(ct);
+        await context.Set<Mitigation>().Where(m => m.TicketId == id).ExecuteDeleteAsync(ct);
+
+        context.Set<CorrectiveActionTicket>().Remove(existing);
         await unitOfWork.CompleteAsync(ct);
         return NoContent();
     }

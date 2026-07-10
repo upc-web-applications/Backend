@@ -7,4 +7,7 @@
     <data name="GenericError" xml:space="preserve"><value>Ocurrio un error.</value></data>
     <data name="OperationCancelled" xml:space="preserve"><value>La operacion fue cancelada.</value></data>
     <data name="InternalServerError" xml:space="preserve"><value>Ocurrio un error interno del servidor.</value></data>
+    <data name="DatabaseError" xml:space="preserve"><value>Error de base de datos</value></data>
+    <data name="InvalidCredentials" xml:space="preserve"><value>Credenciales inválidas</value></data>
+    <data name="UsernameAlreadyTaken" xml:space="preserve"><value>El nombre de usuario ya está en uso</value></data>
 </root>

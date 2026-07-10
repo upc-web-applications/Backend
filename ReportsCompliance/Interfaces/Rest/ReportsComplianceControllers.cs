@@ -23,7 +23,8 @@ namespace Acme.Center.Platform.ReportsCompliance.Interfaces.Rest;
 [SwaggerTag("Historical Incident Records Endpoints")]
 public class HistoricalIncidentRecordsController(
     IReportsComplianceQueryService queryService,
-    AppDbContext context) : ControllerBase
+    AppDbContext context,
+    IUnitOfWork unitOfWork) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation("Get all historical incident records")]
@@ -44,6 +45,63 @@ public class HistoricalIncidentRecordsController(
         var item = await queryService.Handle(query, cancellationToken);
         if (item is null) return NotFound();
         return Ok(HistoricalIncidentRecordResourceFromEntityAssembler.ToResourceFromEntity(item));
+    }
+
+    [HttpPost]
+    [SwaggerOperation("Create historical incident record")]
+    [SwaggerResponse(201, "The record was created.", typeof(HistoricalIncidentRecordResource))]
+    public async Task<IActionResult> Create([FromBody] HistoricalIncidentRecordResource resource, CancellationToken ct)
+    {
+        var entity = new HistoricalIncidentRecord
+        {
+            Id = resource.Id,
+            Sector = resource.Sector,
+            IncidentType = resource.IncidentType,
+            Criticality = resource.Criticality,
+            IncidentDate = resource.IncidentDate,
+            Description = resource.Description,
+            Resolved = resource.Resolved,
+            ClosingDate = resource.ClosingDate,
+            ResolutionTimeHours = resource.ResolutionTimeHours,
+            OperatorId = resource.OperatorId,
+        };
+        context.Set<HistoricalIncidentRecord>().Add(entity);
+        await unitOfWork.CompleteAsync(ct);
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+    }
+
+    [HttpPut("{id}")]
+    [SwaggerOperation("Update historical incident record")]
+    [SwaggerResponse(200, "The record was updated.", typeof(HistoricalIncidentRecordResource))]
+    [SwaggerResponse(404, "The record was not found.")]
+    public async Task<IActionResult> Update(string id, [FromBody] HistoricalIncidentRecordResource resource, CancellationToken ct)
+    {
+        var existing = await context.Set<HistoricalIncidentRecord>().FindAsync([id], ct);
+        if (existing is null) return NotFound();
+        existing.Sector = resource.Sector;
+        existing.IncidentType = resource.IncidentType;
+        existing.Criticality = resource.Criticality;
+        existing.IncidentDate = resource.IncidentDate;
+        existing.Description = resource.Description;
+        existing.Resolved = resource.Resolved;
+        existing.ClosingDate = resource.ClosingDate;
+        existing.ResolutionTimeHours = resource.ResolutionTimeHours;
+        existing.OperatorId = resource.OperatorId;
+        await unitOfWork.CompleteAsync(ct);
+        return Ok(existing);
+    }
+
+    [HttpDelete("{id}")]
+    [SwaggerOperation("Delete historical incident record")]
+    [SwaggerResponse(204, "The record was deleted.")]
+    [SwaggerResponse(404, "The record was not found.")]
+    public async Task<IActionResult> Delete(string id, CancellationToken ct)
+    {
+        var existing = await context.Set<HistoricalIncidentRecord>().FindAsync([id], ct);
+        if (existing is null) return NotFound();
+        context.Set<HistoricalIncidentRecord>().Remove(existing);
+        await unitOfWork.CompleteAsync(ct);
+        return NoContent();
     }
 }
 
@@ -176,6 +234,27 @@ public class CriticalAlertsController(
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return Ok(alerts.Select(CriticalAlertResourceFromEntityAssembler.ToResourceFromEntity));
+    }
+
+    [HttpPost]
+    [SwaggerOperation("Create critical alert")]
+    [SwaggerResponse(201, "The alert was created.", typeof(CriticalAlertResource))]
+    public async Task<IActionResult> Create([FromBody] CriticalAlertResource resource, CancellationToken ct)
+    {
+        var entity = new CriticalAlert
+        {
+            Id = resource.Id,
+            Type = resource.Type,
+            Sector = resource.Sector,
+            RiskType = resource.RiskType,
+            Message = resource.Message,
+            ElapsedHours = resource.ElapsedHours,
+            Status = resource.Status,
+            ResponsibleSupervisor = resource.ResponsibleSupervisor,
+        };
+        context.Set<CriticalAlert>().Add(entity);
+        await unitOfWork.CompleteAsync(ct);
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
     }
 
     [HttpGet("{id}")]
