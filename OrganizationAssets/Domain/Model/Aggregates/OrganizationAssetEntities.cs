@@ -35,4 +35,6 @@ public class Asset
     public string Status { get; set; } = "Active";
     public DateTime SystemEntryDate { get; set; } = DateTime.UtcNow;
     public DateTime? DeactivationDate { get; set; }
+    public DateTime AcquisitionDate { get; set; } = DateTime.UtcNow;
+    public DateTime? LastMaintenanceDate { get; set; }
 }
