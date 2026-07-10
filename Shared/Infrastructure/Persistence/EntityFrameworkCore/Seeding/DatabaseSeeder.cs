@@ -24,10 +24,23 @@ public static class DatabaseSeeder
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
         var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseSeeder");
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+        var currentYear = DateTime.UtcNow.Year;
         try
         {
-            var context = serviceProvider.GetRequiredService<AppDbContext>();
+            await context.Database.MigrateAsync();
+        }
+        catch (Exception exception)
+        {
+            // Fallback for databases already provisioned with EnsureCreated (no migration
+            // history). EnsureCreated is idempotent and keeps the API running so seeding
+            // (and the app) can proceed. Recreate the database on deploy for a clean schema.
+            logger.LogWarning(exception, "Migration failed; falling back to EnsureCreated. For a clean schema, recreate the database on deploy.");
             await context.Database.EnsureCreatedAsync();
+        }
+
+        try
+        {
 
             // ── IAM: Roles ──
             var roleAdmin = await context.Roles.FindAsync("ROLE_ADMIN");
@@ -338,7 +351,6 @@ public static class DatabaseSeeder
             // so dashboards, trends and the SST plan have meaningful data.
             if (await context.CorrectiveActionTickets.CountAsync() < 30)
             {
-                var currentYear = DateTime.UtcNow.Year;
                 var extraTickets = new[]
                 {
                     // Existing tickets (keep)
@@ -499,7 +511,10 @@ public static class DatabaseSeeder
                     new HeatMapZone { Id = 1, Name = "Zona de Forjado", SectorId = 1, HeatIndex = 85.5m, RiskLevel = "High", LastUpdate = DateTime.UtcNow },
                     new HeatMapZone { Id = 2, Name = "Almacen de Quimicos", SectorId = 2, HeatIndex = 92.0m, RiskLevel = "Critical", LastUpdate = DateTime.UtcNow },
                     new HeatMapZone { Id = 3, Name = "Linea de Ensamblaje", SectorId = 3, HeatIndex = 45.0m, RiskLevel = "Low", LastUpdate = DateTime.UtcNow },
-                    new HeatMapZone { Id = 4, Name = "Zona de Soldadura", SectorId = 4, HeatIndex = 70.5m, RiskLevel = "Medium", LastUpdate = DateTime.UtcNow }
+                    new HeatMapZone { Id = 4, Name = "Zona de Soldadura", SectorId = 4, HeatIndex = 70.5m, RiskLevel = "Medium", LastUpdate = DateTime.UtcNow },
+                    new HeatMapZone { Id = 5, Name = "Taller de Mantenimiento", SectorId = 5, HeatIndex = 60.0m, RiskLevel = "Medium", LastUpdate = DateTime.UtcNow },
+                    new HeatMapZone { Id = 6, Name = "Zona de Pintura", SectorId = 6, HeatIndex = 78.0m, RiskLevel = "High", LastUpdate = DateTime.UtcNow },
+                    new HeatMapZone { Id = 7, Name = "Almacen General", SectorId = 7, HeatIndex = 38.0m, RiskLevel = "Low", LastUpdate = DateTime.UtcNow }
                 );
                 await context.SaveChangesAsync();
             }
@@ -509,7 +524,9 @@ public static class DatabaseSeeder
             {
                 var monTech1 = new MonitorTechnician { Id = Guid.NewGuid().ToString("N"), Name = "Carlos Mendoza Lopez", Specialty = "Electricidad", Status = "Active" };
                 var monTech2 = new MonitorTechnician { Id = Guid.NewGuid().ToString("N"), Name = "Maria Garcia Torres", Specialty = "Mecanica", Status = "Active" };
-                context.DashboardTechnicians.AddRange(monTech1, monTech2);
+                var monTech3 = new MonitorTechnician { Id = Guid.NewGuid().ToString("N"), Name = "Juan Perez Ramirez", Specialty = "Soldadura", Status = "Active" };
+                var monTech4 = new MonitorTechnician { Id = Guid.NewGuid().ToString("N"), Name = "Lucia Fernandez Diaz", Specialty = "Quimica", Status = "Active" };
+                context.DashboardTechnicians.AddRange(monTech1, monTech2, monTech3, monTech4);
                 await context.SaveChangesAsync();
             }
 
@@ -522,7 +539,10 @@ public static class DatabaseSeeder
                 context.DashboardTickets.AddRange(
                     new MonitorTicket { Id = 1, SectorId = 1, Title = "Ruido excesivo en forjado", Status = "InProgress", Priority = "High", AssignedTechnicianId = monTech1Id, CreatedAt = DateTime.UtcNow.AddDays(-2) },
                     new MonitorTicket { Id = 2, SectorId = 2, Title = "Derrame quimico pendiente", Status = "Pending", Priority = "Critical", AssignedTechnicianId = monTech2Id, CreatedAt = DateTime.UtcNow.AddDays(-1) },
-                    new MonitorTicket { Id = 3, SectorId = 4, Title = "Cableado expuesto en robot", Status = "Scheduled", Priority = "Medium", AssignedTechnicianId = monTech1Id, CreatedAt = DateTime.UtcNow }
+                    new MonitorTicket { Id = 3, SectorId = 4, Title = "Cableado expuesto en robot", Status = "Scheduled", Priority = "Medium", AssignedTechnicianId = monTech1Id, CreatedAt = DateTime.UtcNow },
+                    new MonitorTicket { Id = 4, SectorId = 6, Title = "Ventilacion insuficiente en pintura", Status = "InProgress", Priority = "High", AssignedTechnicianId = monTech1Id, CreatedAt = DateTime.UtcNow.AddDays(-3) },
+                    new MonitorTicket { Id = 5, SectorId = 5, Title = "Calibracion de torquimetro", Status = "Resolved", Priority = "Low", AssignedTechnicianId = monTech2Id, CreatedAt = DateTime.UtcNow.AddDays(-5) },
+                    new MonitorTicket { Id = 6, SectorId = 3, Title = "Mesa de ensamblaje inestable", Status = "Pending", Priority = "Medium", AssignedTechnicianId = monTech2Id, CreatedAt = DateTime.UtcNow.AddDays(-1) }
                 );
                 await context.SaveChangesAsync();
             }
@@ -533,7 +553,10 @@ public static class DatabaseSeeder
                 context.DashboardAssets.AddRange(
                     new MonitorAsset { Id = Guid.NewGuid().ToString("N"), Name = "Prensa Hidraulica #3", Code = "PH-003", SectorId = 1, Status = "Active" },
                     new MonitorAsset { Id = Guid.NewGuid().ToString("N"), Name = "Robot Soldador RS-200", Code = "RS-200", SectorId = 4, Status = "Active" },
-                    new MonitorAsset { Id = Guid.NewGuid().ToString("N"), Name = "Compresor CA-100", Code = "CA-100", SectorId = 3, Status = "Active" }
+                    new MonitorAsset { Id = Guid.NewGuid().ToString("N"), Name = "Compresor CA-100", Code = "CA-100", SectorId = 3, Status = "Active" },
+                    new MonitorAsset { Id = Guid.NewGuid().ToString("N"), Name = "Cabina de Pintura CP-50", Code = "CP-050", SectorId = 6, Status = "Active" },
+                    new MonitorAsset { Id = Guid.NewGuid().ToString("N"), Name = "Extractor de Soldadura ES-10", Code = "ES-010", SectorId = 5, Status = "Maintenance" },
+                    new MonitorAsset { Id = Guid.NewGuid().ToString("N"), Name = "Estacion de Ensamblaje EE-12", Code = "EE-012", SectorId = 3, Status = "Active" }
                 );
                 await context.SaveChangesAsync();
             }
@@ -543,7 +566,9 @@ public static class DatabaseSeeder
             {
                 context.PreventiveMaintenances.AddRange(
                     new PreventiveMaintenance { Id = Guid.NewGuid().ToString("N"), AssetId = "PH-003", Description = "Mantenimiento trimestral prensa hidraulica", Status = "Scheduled", ScheduledDate = DateTime.UtcNow.AddDays(15) },
-                    new PreventiveMaintenance { Id = Guid.NewGuid().ToString("N"), AssetId = "RS-200", Description = "Revision de brazos roboticos", Status = "InProgress", ScheduledDate = DateTime.UtcNow }
+                    new PreventiveMaintenance { Id = Guid.NewGuid().ToString("N"), AssetId = "RS-200", Description = "Revision de brazos roboticos", Status = "InProgress", ScheduledDate = DateTime.UtcNow },
+                    new PreventiveMaintenance { Id = Guid.NewGuid().ToString("N"), AssetId = "CA-100", Description = "Cambio de filtros de aire comprimido", Status = "Scheduled", ScheduledDate = DateTime.UtcNow.AddDays(7) },
+                    new PreventiveMaintenance { Id = Guid.NewGuid().ToString("N"), AssetId = "CP-050", Description = "Calibracion de sistema de extraccion", Status = "Completed", ScheduledDate = DateTime.UtcNow.AddDays(-10) }
                 );
                 await context.SaveChangesAsync();
             }
@@ -553,7 +578,9 @@ public static class DatabaseSeeder
             {
                 context.ArchivedReports.AddRange(
                     new ArchivedReport { Id = Guid.NewGuid().ToString("N"), Title = "Reporte de Seguridad Mayo 2026", Url = "/reports/seguridad-mayo-2026.pdf", HashIntegrity = "a1b2c3d4e5f6", ArchiveDate = DateTime.UtcNow.AddDays(-30) },
-                    new ArchivedReport { Id = Guid.NewGuid().ToString("N"), Title = "Reporte de Cumplimiento Junio 2026", Url = "/reports/cumplimiento-junio-2026.pdf", HashIntegrity = "f6e5d4c3b2a1", ArchiveDate = DateTime.UtcNow.AddDays(-2) }
+                    new ArchivedReport { Id = Guid.NewGuid().ToString("N"), Title = "Reporte de Cumplimiento Junio 2026", Url = "/reports/cumplimiento-junio-2026.pdf", HashIntegrity = "f6e5d4c3b2a1", ArchiveDate = DateTime.UtcNow.AddDays(-2) },
+                    new ArchivedReport { Id = Guid.NewGuid().ToString("N"), Title = "Reporte de Inspecciones Q1 2026", Url = "/reports/inspecciones-q1-2026.pdf", HashIntegrity = "11aabb22cc33", ArchiveDate = DateTime.UtcNow.AddDays(-45) },
+                    new ArchivedReport { Id = Guid.NewGuid().ToString("N"), Title = "Reporte de Indicadores SST Julio 2026", Url = "/reports/indicadores-julio-2026.pdf", HashIntegrity = "44dd55ee66ff", ArchiveDate = DateTime.UtcNow.AddDays(-1) }
                 );
                 await context.SaveChangesAsync();
             }
@@ -562,8 +589,7 @@ public static class DatabaseSeeder
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "RiskGuard database seeding failed. Check MySQL availability and connection string.");
-            throw;
+            logger.LogError(exception, "RiskGuard database seeding failed for one or more sections. The API will continue running; check MySQL availability and connection string.");
         }
     }
 }
