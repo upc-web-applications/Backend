@@ -30,6 +30,7 @@ public class Asset
     public string Code { get; set; } = string.Empty;
     public string SerialNumber { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
     public int AreaId { get; set; }
     public int HeadquartersId { get; set; }
     public string Status { get; set; } = "Active";
