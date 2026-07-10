@@ -336,9 +336,9 @@ public static class DatabaseSeeder
 
             // Enrichment: ensure a healthy number of corrective tickets across months/sectors
             // so dashboards, trends and the SST plan have meaningful data.
+            var currentYear = DateTime.UtcNow.Year;
             if (await context.CorrectiveActionTickets.CountAsync() < 30)
             {
-                var currentYear = DateTime.UtcNow.Year;
                 var extraTickets = new[]
                 {
                     // Existing tickets (keep)
