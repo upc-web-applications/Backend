@@ -474,7 +474,8 @@ internal static class OperationalReportsCalculator
         var total = annualTickets.Count;
         var completed = annualTickets.Count(IsClosed);
 
-        var monthlyDetails = annualTickets
+        // Get monthly data from tickets
+        var monthlyFromTickets = annualTickets
             .GroupBy(ticket => ticket.CreatedDate.Month)
             .OrderBy(group => group.Key)
             .Select(group =>
@@ -485,7 +486,15 @@ internal static class OperationalReportsCalculator
                 var status = compliance >= 80 ? "optimal" : compliance >= 50 ? "acceptable" : "critical";
                 return new MonthlyOhsDetailResource(group.Key, done, planned, compliance, status);
             })
-            .ToList();
+            .ToDictionary(m => m.Month, m => m);
+
+        // Ensure all 12 months are present (fill missing with zeros)
+        var monthlyDetails = Enumerable.Range(1, 12).Select(month =>
+        {
+            if (monthlyFromTickets.TryGetValue(month, out var existing))
+                return existing;
+            return new MonthlyOhsDetailResource(month, 0, 0, 0, "critical");
+        }).ToList();
 
         var detailsBySector = annualTickets
             .Where(ticket => !string.IsNullOrWhiteSpace(ticket.Sector))
