@@ -18,5 +18,6 @@ public static class ModelBuilderExtensions
         builder.Entity<Asset>().HasKey(asset => asset.Id);
         builder.Entity<Asset>().Property(asset => asset.Id).ValueGeneratedOnAdd();
         builder.Entity<Asset>().HasIndex(asset => asset.Code).IsUnique();
+        builder.Entity<Asset>().Property(asset => asset.Type).HasMaxLength(100);
     }
 }
