@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Acme.Center.Platform.Mitigations.Application.CommandServices;
 using Acme.Center.Platform.Mitigations.Application.QueryServices;
 using Acme.Center.Platform.Mitigations.Domain.Model.Aggregates;
@@ -14,6 +15,7 @@ namespace Acme.Center.Platform.Mitigations.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/ticket-histories")]
+[Authorize(Policy = "SupervisorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Ticket History Endpoints")]
 public class TicketHistoriesController(

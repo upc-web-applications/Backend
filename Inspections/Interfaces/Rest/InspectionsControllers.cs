@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Acme.Center.Platform.Inspections.Application.Internal.Services;
 using Acme.Center.Platform.Inspections.Domain.Model.Aggregates;
@@ -9,6 +10,7 @@ using Acme.Center.Platform.Shared.Interfaces.Rest;
 namespace Acme.Center.Platform.Inspections.Interfaces.Rest;
 
 [Route("api/v1/inspections")]
+[Authorize(Policy = "OperatorOrSupervisor")]
 public class InspectionsController(
     AppDbContext context,
     IUnitOfWork unitOfWork,
@@ -35,5 +37,6 @@ public class InspectionsController(
 }
 
 [Route("api/v1/dangers")]
+[Authorize(Policy = "SupervisorOnly")]
 public class DangersController(AppDbContext context, IUnitOfWork unitOfWork)
     : CrudController<Danger>(context, unitOfWork);

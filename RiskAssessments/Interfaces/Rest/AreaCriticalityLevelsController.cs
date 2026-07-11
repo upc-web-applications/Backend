@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Acme.Center.Platform.RiskAssessments.Application.CommandServices;
 using Acme.Center.Platform.RiskAssessments.Application.QueryServices;
 using Acme.Center.Platform.RiskAssessments.Domain.Model.Queries;
@@ -13,6 +14,7 @@ namespace Acme.Center.Platform.RiskAssessments.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/area-criticality-levels")]
+[Authorize(Policy = "SupervisorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Area Criticality Level Endpoints")]
 public class AreaCriticalityLevelsController(

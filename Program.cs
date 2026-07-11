@@ -149,7 +149,13 @@ builder.Services.AddAuthentication(x =>
         ValidateAudience = false
     };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("OperatorOrSupervisor", policy => policy.RequireRole("Operator", "Supervisor"));
+    options.AddPolicy("SupervisorOnly", policy => policy.RequireRole("Supervisor"));
+    options.AddPolicy("SupervisorOrAdministrator", policy => policy.RequireRole("Supervisor", "Administrator"));
+    options.AddPolicy("AdministratorOnly", policy => policy.RequireRole("Administrator"));
+});
 
 // Shared DI
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -256,23 +262,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure the org_assets.type column exists (idempotent, runs on every startup).
-// MySQL doesn't allow DEFAULT on TEXT/BLOB/GEOMETRY/JSON columns, so we use varchar(100).
+// Apply pending migrations before seeding or querying schema-dependent tables.
 using (var migrateScope = app.Services.CreateScope())
 {
     var dbContext = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-    // Check if column already exists (idempotent guard)
-    var columnExists = await dbContext.Database
-        .SqlQueryRaw<int>(@"SELECT COUNT(*) AS Value FROM information_schema.columns 
-            WHERE table_schema = DATABASE() AND table_name = 'org_assets' AND column_name = 'type'")
-        .FirstAsync();
-
-    if (columnExists == 0)
-    {
-        await dbContext.Database.ExecuteSqlRawAsync(
-            "ALTER TABLE org_assets ADD COLUMN type varchar(100) NOT NULL DEFAULT 'Machinery';");
-    }
+    await dbContext.Database.MigrateAsync();
 }
 
 // Database seeding

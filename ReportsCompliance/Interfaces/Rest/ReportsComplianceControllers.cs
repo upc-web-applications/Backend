@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Acme.Center.Platform.ReportsCompliance.Application.CommandServices;
 using Acme.Center.Platform.ReportsCompliance.Application.QueryServices;
@@ -19,6 +20,7 @@ namespace Acme.Center.Platform.ReportsCompliance.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/historical_incident_records")]
+[Authorize(Policy = "AdministratorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Historical Incident Records Endpoints")]
 public class HistoricalIncidentRecordsController(
@@ -115,6 +117,7 @@ public class HistoricalIncidentRecordsController(
 
 [ApiController]
 [Route("api/v1/annual_ohs_plan")]
+[Authorize(Policy = "AdministratorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Annual OHS Plan Endpoints")]
 public class AnnualOhsPlanController(
@@ -162,6 +165,7 @@ public class AnnualOhsPlanController(
 
 [ApiController]
 [Route("api/v1/predictive_indicators")]
+[Authorize(Policy = "AdministratorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Predictive Indicators Endpoints")]
 public class PredictiveIndicatorsController(
@@ -194,6 +198,7 @@ public class PredictiveIndicatorsController(
 
 [ApiController]
 [Route("api/v1/critical_alerts")]
+[Authorize(Policy = "AdministratorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Critical Alerts Endpoints")]
 public class CriticalAlertsController(
@@ -293,6 +298,7 @@ public class CriticalAlertsController(
 
 [ApiController]
 [Route("api/v1/generated_reports")]
+[Authorize(Policy = "AdministratorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Generated Reports Endpoints")]
 public class GeneratedReportsController(
@@ -355,6 +361,7 @@ public class GeneratedReportsController(
 
 [ApiController]
 [Route("api/v1/kpi_dashboard")]
+[Authorize(Policy = "AdministratorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("KPI Dashboard Endpoints")]
 public class KpiDashboardController(
@@ -387,6 +394,7 @@ public class KpiDashboardController(
 
 [ApiController]
 [Route("api/v1/historical_trends")]
+[Authorize(Policy = "AdministratorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Historical Trends Endpoints")]
 public class HistoricalTrendsController(
@@ -419,6 +427,7 @@ public class HistoricalTrendsController(
 
 [ApiController]
 [Route("api/v1/monthly_reports")]
+[Authorize(Policy = "AdministratorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Monthly Reports Endpoints")]
 public class MonthlyReportsController(AppDbContext context, IUnitOfWork unitOfWork)
@@ -428,6 +437,7 @@ public class MonthlyReportsController(AppDbContext context, IUnitOfWork unitOfWo
 
 [ApiController]
 [Route("api/v1/cumulative_st_indicators")]
+[Authorize(Policy = "AdministratorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Cumulative ST Indicators Endpoints")]
 public class CumulativeStIndicatorsController(AppDbContext context, IUnitOfWork unitOfWork)
