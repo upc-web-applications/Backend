@@ -28,19 +28,6 @@ public static class DatabaseSeeder
         var currentYear = DateTime.UtcNow.Year;
         try
         {
-            await context.Database.MigrateAsync();
-        }
-        catch (Exception exception)
-        {
-            // Fallback for databases already provisioned with EnsureCreated (no migration
-            // history). EnsureCreated is idempotent and keeps the API running so seeding
-            // (and the app) can proceed. Recreate the database on deploy for a clean schema.
-            logger.LogWarning(exception, "Migration failed; falling back to EnsureCreated. For a clean schema, recreate the database on deploy.");
-            await context.Database.EnsureCreatedAsync();
-        }
-
-        try
-        {
 
             // ── IAM: Roles ──
             var roleAdmin = await context.Roles.FindAsync("ROLE_ADMIN");

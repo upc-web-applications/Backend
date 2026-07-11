@@ -266,6 +266,46 @@ app.MapControllers();
 using (var migrateScope = app.Services.CreateScope())
 {
     var dbContext = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = migrateScope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    // Detect if tables already exist (from a previous EnsureCreatedAsync) and
+    // baseline the Initial migration so MigrateAsync() doesn't try to recreate them.
+    try
+    {
+        var tablesExist = await dbContext.Database
+            .SqlQueryRaw<int>($"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'access_logs'")
+            .FirstAsync();
+
+        if (tablesExist > 0)
+        {
+            // Create __EFMigrationsHistory table if missing
+            var historyCount = await dbContext.Database
+                .SqlQueryRaw<int>($"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '__EFMigrationsHistory'")
+                .FirstAsync();
+
+            if (historyCount == 0)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync(@"
+                    CREATE TABLE `__EFMigrationsHistory` (
+                        `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
+                        `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+                        PRIMARY KEY (`MigrationId`)
+                    )");
+            }
+
+            // Mark the Initial migration as already applied (idempotent)
+            await dbContext.Database.ExecuteSqlRawAsync(
+                "INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) VALUES ('20260710082037_Initial', '8.0.11')");
+
+            logger.LogInformation("Baseline applied: Initial migration marked as already applied (tables pre-exist).");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Could not check or baseline migration history; proceeding with MigrateAsync().");
+    }
+
+    // Apply any remaining pending migrations (e.g., AddAssetType)
     await dbContext.Database.MigrateAsync();
 }
 
