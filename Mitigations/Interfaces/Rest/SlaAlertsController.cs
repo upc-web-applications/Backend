@@ -14,7 +14,7 @@ namespace Acme.Center.Platform.Mitigations.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/sla-alerts")]
-[Authorize(Policy = "SupervisorOnly")]
+[Authorize(Policy = "SupervisorOrAdministrator")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("SLA Alert Endpoints")]
 public class SlaAlertsController(

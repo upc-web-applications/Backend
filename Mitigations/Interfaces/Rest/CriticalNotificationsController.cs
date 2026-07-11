@@ -14,7 +14,7 @@ namespace Acme.Center.Platform.Mitigations.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/critical-notifications")]
-[Authorize(Policy = "SupervisorOnly")]
+[Authorize(Policy = "SupervisorOrAdministrator")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Critical Notification Endpoints")]
 public class CriticalNotificationsController(
