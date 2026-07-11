@@ -266,7 +266,22 @@ app.MapControllers();
 using (var migrateScope = app.Services.CreateScope())
 {
     var dbContext = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await dbContext.Database.MigrateAsync();
+    try
+    {
+        await dbContext.Database.MigrateAsync();
+    }
+    catch (MySqlException ex) when (ex.Message.Contains("already exists"))
+    {
+        var logger = migrateScope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning(ex, "Tablas ya existen, registrando migraciones pendientes manualmente");
+        var pending = await dbContext.Database.GetPendingMigrationsAsync();
+        foreach (var migrationId in pending)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(
+                "INSERT IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ({0}, '9.0.0')",
+                migrationId);
+        }
+    }
 }
 
 // Database seeding
