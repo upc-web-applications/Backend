@@ -16,7 +16,7 @@ namespace Acme.Center.Platform.Mitigations.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/corrective-action-tickets")]
-[Authorize(Policy = "SupervisorOnly")]
+[Authorize(Policy = "SupervisorOrAdministrator")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Corrective Action Ticket Endpoints")]
 public class CorrectiveActionTicketsController(
