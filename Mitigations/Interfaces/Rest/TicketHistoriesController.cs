@@ -15,7 +15,7 @@ namespace Acme.Center.Platform.Mitigations.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/ticket-histories")]
-[Authorize(Policy = "SupervisorOnly")]
+[Authorize(Policy = "SupervisorOrAdministrator")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Ticket History Endpoints")]
 public class TicketHistoriesController(

@@ -14,7 +14,7 @@ namespace Acme.Center.Platform.Mitigations.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/measure-verifications")]
-[Authorize(Policy = "SupervisorOnly")]
+[Authorize(Policy = "SupervisorOrAdministrator")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Measure Verification Endpoints")]
 public class MeasureVerificationsController(
