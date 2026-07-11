@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Acme.Center.Platform.Mitigations.Application.CommandServices;
 using Acme.Center.Platform.Mitigations.Application.QueryServices;
@@ -15,6 +16,7 @@ namespace Acme.Center.Platform.Mitigations.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/corrective-action-tickets")]
+[Authorize(Policy = "SupervisorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Corrective Action Ticket Endpoints")]
 public class CorrectiveActionTicketsController(
