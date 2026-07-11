@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Acme.Center.Platform.Hazards.Application.CommandServices;
 using Acme.Center.Platform.Hazards.Application.QueryServices;
 using Acme.Center.Platform.Hazards.Domain.Model.Queries;
@@ -14,6 +15,7 @@ namespace Acme.Center.Platform.Hazards.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/hazards")]
+[Authorize(Policy = "SupervisorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Hazard Endpoints")]
 public class HazardsController(

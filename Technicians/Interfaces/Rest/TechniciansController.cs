@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Acme.Center.Platform.Technicians.Application.CommandServices;
 using Acme.Center.Platform.Technicians.Application.QueryServices;
 using Acme.Center.Platform.Technicians.Domain.Model.Queries;
@@ -13,6 +14,7 @@ namespace Acme.Center.Platform.Technicians.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/technicians")]
+[Authorize(Policy = "SupervisorOnly")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Technician Endpoints")]
 public class TechniciansController(
